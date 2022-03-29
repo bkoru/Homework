@@ -315,11 +315,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\projects\\Homework\\Homework.csproj",
+      "projectUniqueName": "D:\\projects\\CompanyHomework\\Homework.csproj",
       "projectName": "Homework",
-      "projectPath": "D:\\projects\\Homework\\Homework.csproj",
+      "projectPath": "D:\\projects\\CompanyHomework\\Homework.csproj",
       "packagesPath": "C:\\Users\\Batu\\.nuget\\packages\\",
-      "outputPath": "D:\\projects\\Homework\\obj\\",
+      "outputPath": "D:\\projects\\CompanyHomework\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
