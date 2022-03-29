@@ -132,9 +132,16 @@ namespace Homework
             {
                 lines.Add(item.Id + ";" + item.Name + ";" + item.BirthDate.ToString("dd.MM.yyyy") + ";" + item.Company?.Id + ";" + item.Salary + ";" + item.Age);
             }
-
-            CsvHandler.WriteCsv(_appSettings.FilePaths.Employees, lines);
+            if (Directory.Exists(_appSettings.FilePaths.Employees))
+            {
+                CsvHandler.WriteCsv(_appSettings.FilePaths.Employees, lines);
+            }
+            else
+            {
+                Console.WriteLine("Dosya yolu bulunamadı");
+            }
         }
+
         private void SaveCompaniesToCsv()
         {
 
