@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Homework.Settings;
+using Homework.Utils;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -16,6 +18,7 @@ namespace Homework
                .AddJsonFile("appsettings.json", optional: false);
             var config = builder.Build();
             var appSettings = config.Get<AppSettings>();
+
             _dataSlot = new DataSlot(appSettings);
 
             _dataSlot.LoadFromCsv();
@@ -28,6 +31,7 @@ namespace Homework
                 Console.WriteLine("Lütfen geçerli bir sayı giriniz");
                 Console.Write("Eklemek istediğiniz şirket sayısını giriniz: ");
             }
+
             Company.CreateCompany(_dataSlot, companyCount);
 
             Console.WriteLine("----------------Get Company List----------------");
@@ -47,6 +51,7 @@ namespace Homework
                 Console.WriteLine("Lütfen geçerli bir sayı giriniz");
                 Console.Write("Eklemek istediğiniz çalışan sayısını giriniz: ");
             }
+
             Employee.CreateEmployee(_dataSlot, employeeCount);
             _dataSlot.SaveToCsv();
 
@@ -65,6 +70,7 @@ namespace Homework
             {
                 Console.WriteLine(company.Name);
             }
+
             Console.WriteLine("----------------Employee list order by Salary----------------");
             var resultSalary = _dataSlot.Employees.OrderByDescending(e => e.Salary);
 
@@ -121,10 +127,12 @@ namespace Homework
         {
             var lines = new List<string>();
             lines.Add("Id;Name;BirthDate;CompanyId;Salary;Age");
+
             foreach (var item in Employees)
             {
                 lines.Add(item.Id + ";" + item.Name + ";" + item.BirthDate.ToString("dd.MM.yyyy") + ";" + item.Company?.Id + ";" + item.Salary + ";" + item.Age);
             }
+
             CsvHandler.WriteCsv(_appSettings.FilePaths.Employees, lines);
         }
         private void SaveCompaniesToCsv()
@@ -189,29 +197,6 @@ namespace Homework
             Age = age;
         }
 
-        private static Random rnd = new Random();
-        private static DateTime RandomDate(DateTime startDate, DateTime endDate)
-        {
-            int range = (endDate - startDate).Days;
-            int randomDays = rnd.Next(range);
-            return startDate.AddDays(randomDays);
-        }
-
-        private static int AgeCalculate(DateTime randomDate)
-        {
-            int todayYear = DateTime.Now.Year;
-            int todayMonth = DateTime.Now.Month;
-            int todayDay = DateTime.Now.Day;
-            int birthYear = randomDate.Year;
-            int birthMonth = randomDate.Month;
-            int birthDay = randomDate.Day;
-            int age = todayYear - birthYear;
-            if (todayMonth < birthMonth || (todayMonth == birthMonth && todayDay < birthDay))
-                age--;
-
-            return age;
-        }
-
         public static void CreateEmployee(DataSlot dataSlot, int total)
         {
             int companiesCount = dataSlot.Companies.Count;
@@ -219,14 +204,14 @@ namespace Homework
             var endDate = new DateTime(2004, 01, 01);
             for (int i = 0; i < total; i++)
             {
-                var randomId = rnd.Next(1, 999999999);
+                var randomId = RandomUtils.RandomId();
                 while (dataSlot.Employees.Where(e => e.Id == randomId).FirstOrDefault() != null)
                 {
-                    randomId = rnd.Next(1, 999999999);
+                    randomId = RandomUtils.RandomId();
                 }
-                var randomDate = RandomDate(startDate, endDate);
-                var employee = new Employee(randomId, "Emp-" + (i + 1).ToString(), randomDate, rnd.Next(1111, 9999), AgeCalculate(randomDate));
-                employee.Company = dataSlot.Companies[rnd.Next(companiesCount)];
+                var randomDate = RandomUtils.RandomDate(startDate, endDate);
+                var employee = new Employee(randomId, "Emp-" + (i + 1).ToString(), randomDate, RandomUtils.RandomSalary(4200,10000), RandomUtils.AgeCalculate(randomDate));
+                employee.Company = dataSlot.Companies[RandomUtils.RandomIndex(companiesCount)];
                 dataSlot.Employees.Add(employee);
             }
         }
@@ -236,11 +221,14 @@ namespace Homework
         public static List<string> ReadCsv(string filePath, bool hasHeader = true)
         {
             List<string> lines = new List<string>();
+
             if (!File.Exists(filePath))
             {
                 return lines;
             }
+
             lines = File.ReadAllLines(filePath).ToList();
+
             if (hasHeader)
             {
                 lines.RemoveAt(0);
@@ -258,22 +246,6 @@ namespace Homework
                 }
             }
         }
-    }
-
-    public class AppSettings 
-    {
-        public AppSettings_FilePaths FilePaths { get; set; }
-
-        public AppSettings()
-        {
-            FilePaths = new AppSettings_FilePaths();
-        }
-    }
-
-    public class AppSettings_FilePaths
-    {
-        public string Companies { get; set; }
-        public string Employees { get; set; }
     }
     
 }
