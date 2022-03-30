@@ -10,18 +10,15 @@ namespace Homework
 {
     class Program
     {
-        static DataSlot _dataSlot;
+        private static DataSlot _dataSlot = new DataSlot();
+
+        private static AppSettings _appSettings;
+        
         static void Main(string[] args)
         {
-            var builder = new ConfigurationBuilder()
-               .SetBasePath(Directory.GetCurrentDirectory())
-               .AddJsonFile("appsettings.json", optional: false);
-            var config = builder.Build();
-            var appSettings = config.Get<AppSettings>();
+            ConfigureSettings();
 
-            _dataSlot = new DataSlot();
-
-            var _fileHandler = new FileHandler(appSettings, _dataSlot);
+            var _fileHandler = new FileHandler(_appSettings, _dataSlot);
             _fileHandler.LoadFromCsv();
 
             int companyCount = 0;
@@ -42,8 +39,6 @@ namespace Homework
                 Console.WriteLine("{0} {1}", company.Id, company.Name);
             }
 
-            Console.WriteLine("Create Employee from Class void");
-
             int employeeCount = 0;
             Console.Write("Eklemek istediğiniz çalışan sayısını giriniz: ");
 
@@ -56,6 +51,7 @@ namespace Homework
             Employee.CreateEmployee(_dataSlot, employeeCount);
 
             _fileHandler.SaveToCsv();
+
 
             Console.WriteLine("----------------Get Employee List----------------");
 
@@ -82,6 +78,14 @@ namespace Homework
 
             Console.ReadLine();
         }
+        private static void ConfigureSettings()
+        {
+            var builder = new ConfigurationBuilder()
+               .SetBasePath(Directory.GetCurrentDirectory())
+               .AddJsonFile("appsettings.json", optional: false);
+            var config = builder.Build();
+            _appSettings = config.Get<AppSettings>();
+        }
     }
     public class DataSlot
     {
@@ -99,9 +103,11 @@ namespace Homework
     {
         public int Id { get; set; }
         public string Name { get; set; }
+
         public Company()
         {
         }
+
         public Company(int id, string name)
         {
             Id = id;
@@ -125,7 +131,14 @@ namespace Homework
         public DateTime BirthDate { get; set; }
         public Company Company { get; set; }
         public decimal Salary { get; set; }
-        public int Age { get; private set; }
+
+        public int Age
+        {
+            get
+            {
+                return AgeCalculate(BirthDate);
+            }
+        }
 
         public Employee()
         {
@@ -137,18 +150,13 @@ namespace Homework
             Name = name;
             BirthDate = birthDate;
             Salary = salary;
-            AgeCalculate();
         }
 
-        public void AgeCalculate()
+        public static int AgeCalculate(DateTime birthDate)
         {
-            DateTime today = DateTime.Today;
-
-            int age = today.Year - BirthDate.Year;
-            if (today.Month < BirthDate.Month || (today.Month == BirthDate.Month && today.Day < BirthDate.Day))
-                age--;
-
-            Age = age;
+            int totalDays = (int)DateTime.Now.Subtract(birthDate).TotalDays;
+            int age = totalDays / 365;
+            return age;
         }
 
         public static void CreateEmployee(DataSlot dataSlot, int total)
