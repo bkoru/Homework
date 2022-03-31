@@ -17,17 +17,6 @@ namespace Homework.Utils
             return startDate.AddDays(randomDays);
         }
 
-
-        public static int[] RandomEmployeeId()
-        {
-            int[] randomNum = new int[3];
-            for (int i = 0; i < 3; i++)
-            {
-                randomNum[i] = rnd.Next(1, 3);
-            }
-            return randomNum;
-        }
-
         public static int RandomCompanyId()
         {
             int[] RandomCompanyId;

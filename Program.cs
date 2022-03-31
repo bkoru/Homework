@@ -68,13 +68,15 @@ namespace Homework
         private static void LoadFromFile()
         {
             var _fileHandler = new FileHandler(_appSettings, _dataSlot);
-            _fileHandler.LoadFromCsv();
+            _fileHandler.LoadCompaniesFromCsv();
+            _fileHandler.LoadEmployeesFromCsv();
         }
 
         private static void SaveToFile()
         {
             var _fileHandler = new FileHandler(_appSettings, _dataSlot);
-            _fileHandler.SaveToCsv();
+            _fileHandler.SaveEmployeesToCsv();
+            _fileHandler.SaveCompaniesToCsv();
         }
 
         private static void CompanyLists()
@@ -84,13 +86,6 @@ namespace Homework
             foreach (var company in _dataSlot.Companies)
             {
                 Console.WriteLine("{0} {1}", company.Id, company.Name);
-            }
-
-            Console.WriteLine("----------------Company list with Odd ID----------------");
-            var resultOddId = _dataSlot.Companies.Where(c => c.Id % 2 == 1);
-            foreach (var company in resultOddId)
-            {
-                Console.WriteLine(company.Name);
             }
         }
 
@@ -163,7 +158,7 @@ namespace Homework
         {
             get
             {
-                return AgeCalculate(BirthDate);
+                return CalculateAge(BirthDate);
             }
         }
 
@@ -179,7 +174,7 @@ namespace Homework
             Salary = salary;
         }
 
-        public static int AgeCalculate(DateTime birthDate)
+        public static int CalculateAge(DateTime birthDate)
         {
             int totalDays = (int)DateTime.Now.Subtract(birthDate).TotalDays;
             int age = totalDays / 365;
@@ -217,30 +212,8 @@ namespace Homework
             _appSettings = appSettings;
             _dataSlot = dataSlot;
         }
-        private void LoadCompaniesFromCsv()
-        {
-            if (File.Exists(_appSettings.FilePaths.Companies))
-            {
-                var cmpStrList = ReadCsv(_appSettings.FilePaths.Companies);
-                foreach (var item in cmpStrList)
-                {
-                    var fields = item.Split(';');
-                    _dataSlot.Companies.Add(new Company()
-                    {
-                        Id = int.Parse(fields[0]),
-                        Name = fields[1],
-                    });
-                }
-            }
-            else
-            {
-                var lines = new List<string>();
-                lines.Add("Id;Name");
-                WriteCsv(_appSettings.FilePaths.Companies, lines);
-            }
-        }
 
-        private void LoadEmployeesFromCsv()
+        public void LoadEmployeesFromCsv()
         {
             if (File.Exists(_appSettings.FilePaths.Employees))
             {
@@ -260,19 +233,11 @@ namespace Homework
             }
             else
             {
-                var lines = new List<string>();
-                lines.Add("Id;Name;BirthDate;CompanyId;Salary;Age");
-                WriteCsv(_appSettings.FilePaths.Employees, lines);
+                SaveEmployeesToCsv();
             }
         }
 
-        public void LoadFromCsv()
-        {
-            LoadCompaniesFromCsv();
-            LoadEmployeesFromCsv();
-        }
-
-        private void SaveEmployeesToCsv()
+        public void SaveEmployeesToCsv()
         {
             var lines = new List<string>();
             lines.Add("Id;Name;BirthDate;CompanyId;Salary;Age");
@@ -282,10 +247,32 @@ namespace Homework
                 lines.Add(item.Id + ";" + item.Name + ";" + item.BirthDate.ToString("dd.MM.yyyy") + ";" + item.Company?.Id + ";" + item.Salary + ";" + item.Age);
             }
 
-            WriteCsv(_appSettings.FilePaths.Employees, lines);
+            string filePath = _appSettings.FilePaths.Employees + "" + DateTime.Now.ToString("dd-MM-yyyy") + ".csv";
+            WriteCsv(filePath, lines);
         }
 
-        private void SaveCompaniesToCsv()
+        public void LoadCompaniesFromCsv()
+        {
+            if (File.Exists(_appSettings.FilePaths.Companies))
+            {
+                var cmpStrList = ReadCsv(_appSettings.FilePaths.Companies);
+                foreach (var item in cmpStrList)
+                {
+                    var fields = item.Split(';');
+                    _dataSlot.Companies.Add(new Company()
+                    {
+                        Id = int.Parse(fields[0]),
+                        Name = fields[1],
+                    });
+                }
+            }
+            else
+            {
+                SaveCompaniesToCsv();
+            }
+        }
+
+        public void SaveCompaniesToCsv()
         {
             var lines = new List<string>();
             lines.Add("Id;Name");
@@ -295,14 +282,10 @@ namespace Homework
                 lines.Add(item.Id + ";" + item.Name);
             }
 
-            WriteCsv(_appSettings.FilePaths.Companies, lines);
+            string filePath = _appSettings.FilePaths.Companies + "" + DateTime.Now.ToString("dd-MM-yyyy") + ".csv";
+            WriteCsv(filePath, lines);
         }
 
-        public void SaveToCsv()
-        {
-            SaveEmployeesToCsv();
-            SaveCompaniesToCsv();
-        }
         public List<string> ReadCsv(string filePath, bool hasHeader = true)
         {
             List<string> lines = new List<string>();
