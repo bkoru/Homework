@@ -18,11 +18,18 @@ namespace Homework.Utils
         }
 
 
-        public static int RandomId()
+        public static int RandomEmployeeId()
         {
-            int[] randomID;
-            randomID = new int[100];
-            return rnd.Next(randomID.Length);
+            int[] randomId;
+            randomId = new int[1000];
+            return rnd.Next(randomId.Length);
+        }
+
+        public static int RandomCompanyId()
+        {
+            int[] RandomCompanyId;
+            RandomCompanyId = new int[100];
+            return rnd.Next(RandomCompanyId.Length);
         }
 
         public static decimal RandomSalary(int min, int max)

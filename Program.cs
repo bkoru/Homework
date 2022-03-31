@@ -118,7 +118,8 @@ namespace Homework
         {
             for (int i = 0; i < total; i++)
             {
-                var company = new Company(i + 1, "Company" + (i + 1).ToString());
+                var randomId = RandomUtils.RandomCompanyId();
+                var company = new Company(randomId, "Company" + (i + 1).ToString());
                 dataSlot.Companies.Add(company);
             }
         }
@@ -166,8 +167,9 @@ namespace Homework
             var endDate = new DateTime(2004, 01, 01);
             for (int i = 0; i < total; i++)
             {
-                var randomId = RandomUtils.RandomId();
+                var randomId = RandomUtils.RandomEmployeeId();
                 var randomDate = RandomUtils.RandomDate(startDate, endDate);
+
                 var employee = new Employee(randomId, "Emp-" + (i + 1).ToString(), randomDate, RandomUtils.RandomSalary(4200,10000));
                 employee.Company = dataSlot.Companies[RandomUtils.RandomIndex(companiesCount)];
                 dataSlot.Employees.Add(employee);
