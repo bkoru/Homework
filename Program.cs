@@ -17,10 +17,27 @@ namespace Homework
         static void Main(string[] args)
         {
             ConfigureSettings();
+            LoadFromFile();
+            CompanyCreate();
+            EmployeeCreate();
+            SaveToFile();
+            CompanyLists();
+            EmployeeLists();
 
-            var _fileHandler = new FileHandler(_appSettings, _dataSlot);
-            _fileHandler.LoadFromCsv();
+            Console.ReadLine();
+        }
 
+        private static void ConfigureSettings()
+        {
+            var builder = new ConfigurationBuilder()
+               .SetBasePath(Directory.GetCurrentDirectory())
+               .AddJsonFile("appsettings.json", optional: false);
+            var config = builder.Build();
+            _appSettings = config.Get<AppSettings>();
+        }
+
+        private static void CompanyCreate()
+        {
             int companyCount = 0;
             Console.Write("Eklemek istediğiniz şirket sayısını giriniz: ");
             while (!int.TryParse(Console.ReadLine(), out companyCount))
@@ -32,13 +49,10 @@ namespace Homework
 
             Company.CreateCompany(_dataSlot, companyCount);
 
-            Console.WriteLine("----------------Get Company List----------------");
+        }
 
-            foreach (var company in _dataSlot.Companies)
-            {
-                Console.WriteLine("{0} {1}", company.Id, company.Name);
-            }
-
+        private static void EmployeeCreate()
+        {
             int employeeCount = 0;
             Console.Write("Eklemek istediğiniz çalışan sayısını giriniz: ");
 
@@ -49,16 +63,27 @@ namespace Homework
             }
 
             Employee.CreateEmployee(_dataSlot, employeeCount);
+        }
 
+        private static void LoadFromFile()
+        {
+            var _fileHandler = new FileHandler(_appSettings, _dataSlot);
+            _fileHandler.LoadFromCsv();
+        }
+
+        private static void SaveToFile()
+        {
+            var _fileHandler = new FileHandler(_appSettings, _dataSlot);
             _fileHandler.SaveToCsv();
+        }
 
+        private static void CompanyLists()
+        {
+            Console.WriteLine("----------------Get Company List----------------");
 
-            Console.WriteLine("----------------Get Employee List----------------");
-
-            foreach (var employee in _dataSlot.Employees)
+            foreach (var company in _dataSlot.Companies)
             {
-                Console.WriteLine("Employee : Id:{0} Name:{1} BirthDate:{2} Company Name:{3} Company Id:{4} Salary:{5} TL Age:{6}",
-                    employee.Id, employee.Name, employee.BirthDate.ToString("dd.MM.yyyy"), employee.Company?.Name, employee.Company?.Id, employee.Salary, employee.Age);
+                Console.WriteLine("{0} {1}", company.Id, company.Name);
             }
 
             Console.WriteLine("----------------Company list with Odd ID----------------");
@@ -66,6 +91,17 @@ namespace Homework
             foreach (var company in resultOddId)
             {
                 Console.WriteLine(company.Name);
+            }
+        }
+
+        private static void EmployeeLists()
+        {
+            Console.WriteLine("----------------Get Employee List----------------");
+
+            foreach (var employee in _dataSlot.Employees)
+            {
+                Console.WriteLine("Employee : Id:{0} Name:{1} BirthDate:{2} Company Name:{3} Company Id:{4} Salary:{5} TL Age:{6}",
+                    employee.Id, employee.Name, employee.BirthDate.ToString("dd.MM.yyyy"), employee.Company?.Name, employee.Company?.Id, employee.Salary, employee.Age);
             }
 
             Console.WriteLine("----------------Employee list order by Salary----------------");
@@ -75,16 +111,6 @@ namespace Homework
             {
                 Console.WriteLine("{0}: {1} TL", employee.Name, employee.Salary);
             }
-
-            Console.ReadLine();
-        }
-        private static void ConfigureSettings()
-        {
-            var builder = new ConfigurationBuilder()
-               .SetBasePath(Directory.GetCurrentDirectory())
-               .AddJsonFile("appsettings.json", optional: false);
-            var config = builder.Build();
-            _appSettings = config.Get<AppSettings>();
         }
     }
     public class DataSlot
@@ -165,12 +191,16 @@ namespace Homework
             int companiesCount = dataSlot.Companies.Count;
             var startDate = new DateTime(1950, 01, 01);
             var endDate = new DateTime(2004, 01, 01);
+            var biggerId = 0;
+            if (dataSlot.Employees.Count > 0)
+            {
+                biggerId = dataSlot.Employees.Max(e => e.Id);
+            }
+
             for (int i = 0; i < total; i++)
             {
-                var randomId = RandomUtils.RandomEmployeeId();
                 var randomDate = RandomUtils.RandomDate(startDate, endDate);
-
-                var employee = new Employee(randomId, "Emp-" + (i + 1).ToString(), randomDate, RandomUtils.RandomSalary(4200,10000));
+                var employee = new Employee(++biggerId, "Emp-" + (i + 1).ToString(), randomDate, RandomUtils.RandomSalary(4200,10000));
                 employee.Company = dataSlot.Companies[RandomUtils.RandomIndex(companiesCount)];
                 dataSlot.Employees.Add(employee);
             }

@@ -18,11 +18,14 @@ namespace Homework.Utils
         }
 
 
-        public static int RandomEmployeeId()
+        public static int[] RandomEmployeeId()
         {
-            int[] randomId;
-            randomId = new int[1000];
-            return rnd.Next(randomId.Length);
+            int[] randomNum = new int[3];
+            for (int i = 0; i < 3; i++)
+            {
+                randomNum[i] = rnd.Next(1, 3);
+            }
+            return randomNum;
         }
 
         public static int RandomCompanyId()
