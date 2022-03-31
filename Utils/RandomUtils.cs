@@ -20,7 +20,9 @@ namespace Homework.Utils
 
         public static int RandomId()
         {
-            return rnd.Next(1, 999999999);
+            int[] randomID;
+            randomID = new int[100];
+            return rnd.Next(randomID.Length);
         }
 
         public static decimal RandomSalary(int min, int max)

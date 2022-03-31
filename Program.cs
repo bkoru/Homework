@@ -167,10 +167,6 @@ namespace Homework
             for (int i = 0; i < total; i++)
             {
                 var randomId = RandomUtils.RandomId();
-                while (dataSlot.Employees.Where(e => e.Id == randomId).FirstOrDefault() != null)
-                {
-                    randomId = RandomUtils.RandomId();
-                }
                 var randomDate = RandomUtils.RandomDate(startDate, endDate);
                 var employee = new Employee(randomId, "Emp-" + (i + 1).ToString(), randomDate, RandomUtils.RandomSalary(4200,10000));
                 employee.Company = dataSlot.Companies[RandomUtils.RandomIndex(companiesCount)];
