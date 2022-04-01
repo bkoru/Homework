@@ -1,11 +1,12 @@
 ﻿using Homework.Entities;
 using Homework.Settings;
-using Homework.Utils;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Homework
 {
@@ -17,15 +18,81 @@ namespace Homework
         
         static void Main(string[] args)
         {
-            ConfigureSettings();
             LoadFromFile();
-            CreateCompany();
-            CreateEmployee();
-            SaveToFile();
             CompanyLists();
             EmployeeLists();
+            CreateCompany();
+            CreateEmployee();
+            CompanyLists();
+            EmployeeLists();
+            SaveToFile();
 
             Console.ReadLine();
+        }
+
+        private static async void SaveToFile()
+        {
+            var filePath2 = Path.Combine(Directory.GetCurrentDirectory(), "Data", "Companies-" + DateTime.Now.ToString("yyyyMMddHHmm") + ".csv");
+            var content2 = "Id;Name;";
+            foreach (var item in _dataSlot.Companies)
+            {
+                content2 += Environment.NewLine + string.Join(';', item.Id.ToString(), item.Name);
+            }
+
+            await FileHandler.WriteAsync(filePath2, content2);
+
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "Employees-" + DateTime.Now.ToString("yyyyMMddHHmm") + ".csv");
+            var content = "Id;Name;BirthDate;CompanyId;Salary";
+            foreach (var item in _dataSlot.Employees)
+            {
+                content += Environment.NewLine + string.Join(';', item.Id.ToString(), item.Name, item.BirthDate.ToString("dd.MM.yyyy"), item.Company?.Id.ToString(), item.Salary.ToString());
+            }
+
+            await FileHandler.WriteAsync(filePath, content);
+        }
+
+        private static async void LoadFromFile()
+        {
+            var companyFilePaths = Directory.GetFiles(Path.Combine(Directory.GetCurrentDirectory(), "Data"), "Companies-*").OrderBy(e=>e).ToList();
+            foreach (var path in companyFilePaths)
+            {
+                var cmpStr = await FileHandler.ReadAsync(path);
+                var lines = cmpStr.Split(Environment.NewLine).ToList().Where(e => !string.IsNullOrWhiteSpace(e)).ToList();
+                if (lines.Count > 0)
+                    lines.RemoveAt(0);
+
+                foreach (var line in lines)
+                {
+                    var fields = line.Split(';');
+                    _dataSlot.Companies.Add(new Company()
+                    {
+                        Id = int.Parse(fields[0]),
+                        Name = fields[1],
+                    });
+                }
+            }
+
+            var employeeFilePaths = Directory.GetFiles(Path.Combine(Directory.GetCurrentDirectory(), "Data"), "Employees-*").OrderBy(e => e).ToList();
+            foreach (var path in employeeFilePaths)
+            {
+                var cmpStr = await FileHandler.ReadAsync(path);
+                var lines = cmpStr.Split(Environment.NewLine).ToList().Where(e => !string.IsNullOrWhiteSpace(e)).ToList();
+                if (lines.Count > 0)
+                    lines.RemoveAt(0);
+
+                foreach (var line in lines)
+                {
+                    var fields = line.Split(';');
+                    _dataSlot.Employees.Add(new Employee()
+                    {
+                        Id = int.Parse(fields[0]),
+                        Name = fields[1],
+                        BirthDate = DateTime.ParseExact(fields[2], "dd.MM.yyyy", System.Globalization.CultureInfo.InvariantCulture),
+                        Company = _dataSlot.Companies.Where(e => e.Id == int.Parse(fields[3])).FirstOrDefault(),
+                        Salary = decimal.Parse(fields[4]),
+                    });
+                }
+            }
         }
 
         private static void ConfigureSettings()
@@ -48,7 +115,7 @@ namespace Homework
                 Console.Write("Eklemek istediğiniz şirket sayısını giriniz: ");
             }
 
-            Company.CreateCompany(_dataSlot, companyCount, RandomUtils.RandomCompanyId());
+            Company.CreateCompany(_dataSlot, companyCount);
         }
 
         private static void CreateEmployee()
@@ -62,25 +129,13 @@ namespace Homework
                 Console.Write("Eklemek istediğiniz çalışan sayısını giriniz: ");
             }
 
-            Employee.CreateEmployee(_dataSlot, employeeCount, RandomUtils.RandomSalary(4200, 10000));
+            Employee.CreateEmployee(_dataSlot, employeeCount);
         }
 
-        private static void LoadFromFile()
-        {
-            var _fileHandler = new FileHandler(_appSettings, _dataSlot);
-            _fileHandler.LoadCompaniesFromCsv();
-            _fileHandler.LoadEmployeesFromCsv();
-        }
-
-        private static void SaveToFile()
-        {
-            var _fileHandler = new FileHandler(_appSettings, _dataSlot);
-            _fileHandler.SaveEmployeesToCsv();
-            _fileHandler.SaveCompaniesToCsv();
-        }
 
         private static void CompanyLists()
         {
+            Console.Clear();
             Console.WriteLine("----------------Get Company List----------------");
 
             foreach (var company in _dataSlot.Companies)
@@ -122,124 +177,14 @@ namespace Homework
 
     public class FileHandler
     {
-        private readonly AppSettings _appSettings;
-        private readonly DataSlot _dataSlot;
-
-        public FileHandler(AppSettings appSettings, DataSlot dataSlot)
+        public static async Task WriteAsync(string filePath, string content)
         {
-            _appSettings = appSettings;
-            _dataSlot = dataSlot;
+            await File.WriteAllTextAsync(filePath, content, Encoding.UTF8);
         }
 
-        public void LoadEmployeesFromCsv()
+        public static async Task<string> ReadAsync(string filepath)
         {
-            if (File.Exists(_appSettings.FilePaths.Employees))
-            {
-                var empStrList = ReadCsv(_appSettings.FilePaths.Employees);
-                foreach (var item in empStrList)
-                {
-                    var fields = item.Split(';');
-                    _dataSlot.Employees.Add(new Employee()
-                    {
-                        Id = int.Parse(fields[0]),
-                        Name = fields[1],
-                        BirthDate = DateTime.ParseExact(fields[2], "dd.MM.yyyy", System.Globalization.CultureInfo.InvariantCulture),
-                        Company = _dataSlot.Companies.Where(e => e.Id == int.Parse(fields[3])).FirstOrDefault(),
-                        Salary = decimal.Parse(fields[4]),
-                    });
-                }
-            }
-            else
-            {
-                SaveEmployeesToCsv();
-            }
-        }
-
-        public void SaveEmployeesToCsv()
-        {
-            var lines = new List<string>();
-            lines.Add("Id;Name;BirthDate;CompanyId;Salary;Age");
-
-            foreach (var item in _dataSlot.Employees)
-            {
-                lines.Add(item.Id + ";" + item.Name + ";" + item.BirthDate.ToString("dd.MM.yyyy") + ";" + item.Company?.Id + ";" + item.Salary + ";" + item.Age);
-            }
-
-            string filePath = _appSettings.FilePaths.Employees + "" + DateTime.Now.ToString("dd-MM-yyyy") + ".csv";
-            WriteCsv(filePath, lines);
-        }
-
-        public void LoadCompaniesFromCsv()
-        {
-            if (File.Exists(_appSettings.FilePaths.Companies))
-            {
-                var cmpStrList = ReadCsv(_appSettings.FilePaths.Companies);
-                foreach (var item in cmpStrList)
-                {
-                    var fields = item.Split(';');
-                    _dataSlot.Companies.Add(new Company()
-                    {
-                        Id = int.Parse(fields[0]),
-                        Name = fields[1],
-                    });
-                }
-            }
-            else
-            {
-                SaveCompaniesToCsv();
-            }
-        }
-
-        public void SaveCompaniesToCsv()
-        {
-            var lines = new List<string>();
-            lines.Add("Id;Name");
-
-            foreach (var item in _dataSlot.Companies)
-            {
-                lines.Add(item.Id + ";" + item.Name);
-            }
-
-            string filePath = _appSettings.FilePaths.Companies + "" + DateTime.Now.ToString("dd-MM-yyyy") + ".csv";
-            WriteCsv(filePath, lines);
-        }
-
-        public List<string> ReadCsv(string filePath, bool hasHeader = true)
-        {
-            List<string> lines = new List<string>();
-
-            if (!File.Exists(filePath))
-            {
-                return lines;
-            }
-
-            lines = File.ReadAllLines(filePath).ToList();
-
-            if (hasHeader)
-            {
-                lines.RemoveAt(0);
-            }
-            return lines.Where(e => !String.IsNullOrEmpty(e)).ToList();
-        }
-
-        public void WriteCsv(string filePath, List<string> lines)
-        {
-            try
-            {
-                using (StreamWriter sw = new StreamWriter(filePath))
-                {
-                    foreach (var item in lines)
-                    {
-                        sw.WriteLine(item);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                Console.WriteLine("Lütfen appsettings.json dosyasına geçerli bir konum yazınız.");
-            }
+            return await File.ReadAllTextAsync(filepath, Encoding.UTF8);
         }
     }
-    
 }

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Linq;
 
 namespace Homework.Entities
 {
@@ -21,11 +17,16 @@ namespace Homework.Entities
             Name = name;
         }
 
-        public static void CreateCompany(DataSlot dataSlot, int total, int id)
+        public static void CreateCompany(DataSlot dataSlot, int total)
         {
+            var biggerId = 0;
+            if (dataSlot.Companies.Count > 0)
+            {
+                biggerId = dataSlot.Companies.Max(e => e.Id);
+            }
             for (int i = 0; i < total; i++)
             {
-                var company = new Company(id, "Company" + (i + 1).ToString());
+                var company = new Company(++biggerId, "Company" + (i + 1).ToString());
                 dataSlot.Companies.Add(company);
             }
         }

@@ -1,4 +1,5 @@
 bin/
 obj/
 .vs/
-Data/
+!Data/**
+

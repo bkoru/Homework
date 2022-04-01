@@ -1,9 +1,5 @@
-﻿using Homework.Utils;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Homework.Entities
 {
@@ -35,6 +31,8 @@ namespace Homework.Entities
             Salary = salary;
         }
 
+
+        private static Random rnd = new Random();
         public static int CalculateAge(DateTime birthDate)
         {
             int totalDays = (int)DateTime.Now.Subtract(birthDate).TotalDays;
@@ -42,7 +40,14 @@ namespace Homework.Entities
             return age;
         }
 
-        public static void CreateEmployee(DataSlot dataSlot, int total, decimal salary)
+        public static DateTime RandomDate(DateTime startDate, DateTime endDate)
+        {
+            int range = (endDate - startDate).Days;
+            int randomDays = rnd.Next(range);
+            return startDate.AddDays(randomDays);
+        }
+
+        public static void CreateEmployee(DataSlot dataSlot, int total)
         {
             int companiesCount = dataSlot.Companies.Count;
             var startDate = new DateTime(1950, 01, 01);
@@ -55,9 +60,9 @@ namespace Homework.Entities
 
             for (int i = 0; i < total; i++)
             {
-                var randomDate = RandomUtils.RandomDate(startDate, endDate);
-                var employee = new Employee(++biggerId, "Emp-" + (i + 1).ToString(), randomDate, salary);
-                employee.Company = dataSlot.Companies[RandomUtils.RandomIndex(companiesCount)];
+                var randomDate = RandomDate(startDate, endDate);
+                var employee = new Employee(++biggerId, "Emp-" + (i + 1).ToString(), randomDate, rnd.Next(4200,10000));
+                employee.Company = dataSlot.Companies[rnd.Next(companiesCount)];
                 dataSlot.Employees.Add(employee);
             }
         }
