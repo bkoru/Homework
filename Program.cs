@@ -1,4 +1,5 @@
-﻿using Homework.Settings;
+﻿using Homework.Entities;
+using Homework.Settings;
 using Homework.Utils;
 using Microsoft.Extensions.Configuration;
 using System;
@@ -18,8 +19,8 @@ namespace Homework
         {
             ConfigureSettings();
             LoadFromFile();
-            CompanyCreate();
-            EmployeeCreate();
+            CreateCompany();
+            CreateEmployee();
             SaveToFile();
             CompanyLists();
             EmployeeLists();
@@ -36,7 +37,7 @@ namespace Homework
             _appSettings = config.Get<AppSettings>();
         }
 
-        private static void CompanyCreate()
+        private static void CreateCompany()
         {
             int companyCount = 0;
             Console.Write("Eklemek istediğiniz şirket sayısını giriniz: ");
@@ -47,11 +48,10 @@ namespace Homework
                 Console.Write("Eklemek istediğiniz şirket sayısını giriniz: ");
             }
 
-            Company.CreateCompany(_dataSlot, companyCount);
-
+            Company.CreateCompany(_dataSlot, companyCount, RandomUtils.RandomCompanyId());
         }
 
-        private static void EmployeeCreate()
+        private static void CreateEmployee()
         {
             int employeeCount = 0;
             Console.Write("Eklemek istediğiniz çalışan sayısını giriniz: ");
@@ -62,7 +62,7 @@ namespace Homework
                 Console.Write("Eklemek istediğiniz çalışan sayısını giriniz: ");
             }
 
-            Employee.CreateEmployee(_dataSlot, employeeCount);
+            Employee.CreateEmployee(_dataSlot, employeeCount, RandomUtils.RandomSalary(4200, 10000));
         }
 
         private static void LoadFromFile()
@@ -117,88 +117,6 @@ namespace Homework
         {
             Companies = new List<Company>();
             Employees = new List<Employee>();
-        }
-    }
-
-    public class Company
-    {
-        public int Id { get; set; }
-        public string Name { get; set; }
-
-        public Company()
-        {
-        }
-
-        public Company(int id, string name)
-        {
-            Id = id;
-            Name = name;
-        }
-
-        public static void CreateCompany(DataSlot dataSlot, int total)
-        {
-            for (int i = 0; i < total; i++)
-            {
-                var randomId = RandomUtils.RandomCompanyId();
-                var company = new Company(randomId, "Company" + (i + 1).ToString());
-                dataSlot.Companies.Add(company);
-            }
-        }
-    }
-
-    public class Employee
-    {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public DateTime BirthDate { get; set; }
-        public Company Company { get; set; }
-        public decimal Salary { get; set; }
-
-        public int Age
-        {
-            get
-            {
-                return CalculateAge(BirthDate);
-            }
-        }
-
-        public Employee()
-        {
-        }
-
-        public Employee(int id, string name, DateTime birthDate, decimal salary)
-        {
-            Id = id;
-            Name = name;
-            BirthDate = birthDate;
-            Salary = salary;
-        }
-
-        public static int CalculateAge(DateTime birthDate)
-        {
-            int totalDays = (int)DateTime.Now.Subtract(birthDate).TotalDays;
-            int age = totalDays / 365;
-            return age;
-        }
-
-        public static void CreateEmployee(DataSlot dataSlot, int total)
-        {
-            int companiesCount = dataSlot.Companies.Count;
-            var startDate = new DateTime(1950, 01, 01);
-            var endDate = new DateTime(2004, 01, 01);
-            var biggerId = 0;
-            if (dataSlot.Employees.Count > 0)
-            {
-                biggerId = dataSlot.Employees.Max(e => e.Id);
-            }
-
-            for (int i = 0; i < total; i++)
-            {
-                var randomDate = RandomUtils.RandomDate(startDate, endDate);
-                var employee = new Employee(++biggerId, "Emp-" + (i + 1).ToString(), randomDate, RandomUtils.RandomSalary(4200,10000));
-                employee.Company = dataSlot.Companies[RandomUtils.RandomIndex(companiesCount)];
-                dataSlot.Employees.Add(employee);
-            }
         }
     }
 
@@ -306,12 +224,20 @@ namespace Homework
 
         public void WriteCsv(string filePath, List<string> lines)
         {
-            using (StreamWriter sw = new StreamWriter(filePath))
+            try
             {
-                foreach (var item in lines)
+                using (StreamWriter sw = new StreamWriter(filePath))
                 {
-                    sw.WriteLine(item);
+                    foreach (var item in lines)
+                    {
+                        sw.WriteLine(item);
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                Console.WriteLine("Lütfen appsettings.json dosyasına geçerli bir konum yazınız.");
             }
         }
     }

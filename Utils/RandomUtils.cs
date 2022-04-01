@@ -26,7 +26,7 @@ namespace Homework.Utils
 
         public static decimal RandomSalary(int min, int max)
         {
-            return Convert.ToDecimal((double)rnd.Next(min, max) + rnd.NextDouble());
+            return Convert.ToDecimal(((double)rnd.Next(min, max) + rnd.NextDouble()).ToString("0.00"));
         }
     }
 }
