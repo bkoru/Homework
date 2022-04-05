@@ -32,67 +32,73 @@ namespace Homework
 
         private static async void SaveToFile()
         {
-            var filePath2 = Path.Combine(Directory.GetCurrentDirectory(), "Data", "Companies-" + DateTime.Now.ToString("yyyyMMddHHmm") + ".csv");
-            var content2 = "Id;Name;";
+            var CompanyPath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "Companies-" + DateTime.Now.ToString("yyyyMMddHHmm") + ".csv");
+            var companyContent = "Name;";
             foreach (var item in _dataSlot.Companies)
             {
-                content2 += Environment.NewLine + string.Join(';', item.Id.ToString(), item.Name);
+                companyContent += Environment.NewLine + string.Join(';', item.Name);
             }
 
-            await FileHandler.WriteAsync(filePath2, content2);
+            await FileHandler.WriteAsync(CompanyPath, companyContent);
 
-            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "Employees-" + DateTime.Now.ToString("yyyyMMddHHmm") + ".csv");
-            var content = "Id;Name;BirthDate;CompanyId;Salary";
+            var employeePath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "Employees-" + DateTime.Now.ToString("yyyyMMddHHmm") + ".csv");
+            var employeeContent = "Name;BirthDate;CompanyName;Salary;TrId";
             foreach (var item in _dataSlot.Employees)
             {
-                content += Environment.NewLine + string.Join(';', item.Id.ToString(), item.Name, item.BirthDate.ToString("dd.MM.yyyy"), item.Company?.Id.ToString(), item.Salary.ToString());
+                employeeContent += Environment.NewLine + string.Join(';', item.Name, item.BirthDate.ToString("dd.MM.yyyy"), item.Company?.Name, item.Salary.ToString(), item.TrId);
             }
 
-            await FileHandler.WriteAsync(filePath, content);
+            await FileHandler.WriteAsync(employeePath, employeeContent);
         }
 
         private static async void LoadFromFile()
         {
-            var companyFilePaths = Directory.GetFiles(Path.Combine(Directory.GetCurrentDirectory(), "Data"), "Companies-*").OrderBy(e=>e).ToList();
-            foreach (var path in companyFilePaths)
-            {
-                var cmpStr = await FileHandler.ReadAsync(path);
-                var lines = cmpStr.Split(Environment.NewLine).ToList().Where(e => !string.IsNullOrWhiteSpace(e)).ToList();
-                if (lines.Count > 0)
-                    lines.RemoveAt(0);
+                var cmpStr = await FileHandler.ReadAsync(Path.Combine(Directory.GetCurrentDirectory(), "Data", "Companies-Sample.csv"));
+                var companyLines = cmpStr.Split(Environment.NewLine).ToList().Where(e => !string.IsNullOrWhiteSpace(e)).ToList();
+                if (companyLines.Count > 0)
+                companyLines.RemoveAt(0);
 
-                foreach (var line in lines)
-                {
+                foreach (var line in companyLines)
+            {
                     var fields = line.Split(';');
-                    _dataSlot.Companies.Add(new Company()
+                    var found = _dataSlot.Companies.Find(e =>e.Name == fields[1]);
+                    if (found == null)
                     {
-                        Id = int.Parse(fields[0]),
-                        Name = fields[1],
-                    });
+                        var biggerId = 0;
+                        if (_dataSlot.Companies.Count > 0)
+                        {
+                            biggerId = _dataSlot.Companies.Max(e => e.Id);
+                        }
+                        _dataSlot.Companies.Add(new Company()
+                        {
+                            Id = ++biggerId,
+                            Name = fields[1],
+                        });
+                    }
                 }
-            }
 
-            var employeeFilePaths = Directory.GetFiles(Path.Combine(Directory.GetCurrentDirectory(), "Data"), "Employees-*").OrderBy(e => e).ToList();
-            foreach (var path in employeeFilePaths)
-            {
-                var cmpStr = await FileHandler.ReadAsync(path);
-                var lines = cmpStr.Split(Environment.NewLine).ToList().Where(e => !string.IsNullOrWhiteSpace(e)).ToList();
-                if (lines.Count > 0)
-                    lines.RemoveAt(0);
+                var empStr = await FileHandler.ReadAsync(Path.Combine(Directory.GetCurrentDirectory(), "Data", "Employees-Sample.csv"));
+                var employeeLines = empStr.Split(Environment.NewLine).ToList().Where(e => !string.IsNullOrWhiteSpace(e)).ToList();
+                if (employeeLines.Count > 0)
+                employeeLines.RemoveAt(0);
 
-                foreach (var line in lines)
+                foreach (var line in employeeLines)
                 {
                     var fields = line.Split(';');
+                var found = _dataSlot.Employees.Find(e => e.TrId == fields[4]);
+                if (found == null)
+                {
                     _dataSlot.Employees.Add(new Employee()
                     {
-                        Id = int.Parse(fields[0]),
-                        Name = fields[1],
-                        BirthDate = DateTime.ParseExact(fields[2], "dd.MM.yyyy", System.Globalization.CultureInfo.InvariantCulture),
-                        Company = _dataSlot.Companies.Where(e => e.Id == int.Parse(fields[3])).FirstOrDefault(),
-                        Salary = decimal.Parse(fields[4]),
+                        Name = fields[0],
+                        BirthDate = DateTime.ParseExact(fields[1], "dd.MM.yyyy", System.Globalization.CultureInfo.InvariantCulture),
+                        Company = _dataSlot.Companies.Where(e => e.Name == fields[2]).FirstOrDefault(),
+                        Salary = decimal.Parse(fields[3]),
+                        TrId = fields[4]
                     });
                 }
             }
+                
         }
 
         private static void ConfigureSettings()
@@ -140,7 +146,7 @@ namespace Homework
 
             foreach (var company in _dataSlot.Companies)
             {
-                Console.WriteLine("{0} {1}", company.Id, company.Name);
+                Console.WriteLine("{0}", company.Name);
             }
         }
 
@@ -150,8 +156,8 @@ namespace Homework
 
             foreach (var employee in _dataSlot.Employees)
             {
-                Console.WriteLine("Employee : Id:{0} Name:{1} BirthDate:{2} Company Name:{3} Company Id:{4} Salary:{5} TL Age:{6}",
-                    employee.Id, employee.Name, employee.BirthDate.ToString("dd.MM.yyyy"), employee.Company?.Name, employee.Company?.Id, employee.Salary, employee.Age);
+                Console.WriteLine("Name:{0} BirthDate:{1} Company Name:{2} Company Id:{3} Salary:{4} TL Age:{5} TR Id:{6}",
+                    employee.Name, employee.BirthDate.ToString("dd.MM.yyyy"), employee.Company?.Name, employee.Company?.Id, employee.Salary, employee.Age, employee.TrId);
             }
 
             Console.WriteLine("----------------Employee list order by Salary----------------");

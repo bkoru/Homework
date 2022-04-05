@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Homework.Entities
@@ -10,6 +11,7 @@ namespace Homework.Entities
         public DateTime BirthDate { get; set; }
         public Company Company { get; set; }
         public decimal Salary { get; set; }
+        public string TrId { get; set; }
 
         public int Age
         {
@@ -23,12 +25,13 @@ namespace Homework.Entities
         {
         }
 
-        public Employee(int id, string name, DateTime birthDate, decimal salary)
+        public Employee(int id, string name, DateTime birthDate, decimal salary, string trId)
         {
             Id = id;
             Name = name;
             BirthDate = birthDate;
             Salary = salary;
+            TrId = trId;
         }
 
 
@@ -47,6 +50,22 @@ namespace Homework.Entities
             return startDate.AddDays(randomDays);
         }
 
+        public static string RandomTcNo()
+        {
+            string trId = "";
+
+            for (int i = 0; i < 1; i++)
+            {
+                trId += rnd.Next(1, 9);
+            }
+
+            for (int i = 1; i <= 10; i++)
+            {
+                trId += rnd.Next(0, 9);
+            }
+            return trId;
+        }
+
         public static void CreateEmployee(DataSlot dataSlot, int total)
         {
             int companiesCount = dataSlot.Companies.Count;
@@ -60,8 +79,9 @@ namespace Homework.Entities
 
             for (int i = 0; i < total; i++)
             {
+                var trId = RandomTcNo();
                 var randomDate = RandomDate(startDate, endDate);
-                var employee = new Employee(++biggerId, "Emp-" + (i + 1).ToString(), randomDate, rnd.Next(4200,10000));
+                var employee = new Employee(++biggerId, "Emp-" + (i + 1).ToString(), randomDate, rnd.Next(4200,10000),trId);
                 employee.Company = dataSlot.Companies[rnd.Next(companiesCount)];
                 dataSlot.Employees.Add(employee);
             }
