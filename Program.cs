@@ -57,7 +57,7 @@ namespace Homework
                 else if (cki.Key == ConsoleKey.D7)
                     EmployeeLists();
                 else if (cki.Key == ConsoleKey.D8)
-                    filterSalary();
+                    FilterSalary();
             }
             while (cki.Key != ConsoleKey.Escape);
         }
@@ -300,13 +300,23 @@ namespace Homework
             user.BirthDate = birthDate;
             user.Name = nameInput;
             user.TrId = trIdInput;
-            _dataSlot.Employees.Add(user);
 
-            Console.WriteLine("User created. " + user.Name + " " + user.TrId);
+            var found = _dataSlot.Employees.Find(e => e.TrId == trIdInput);
+
+            if (found == null)
+            {
+                _dataSlot.Employees.Add(user);
+                Console.WriteLine("User created. " + user.Name + " " + user.TrId);
+            }
+            else
+            {
+                Console.WriteLine("The ID number you entered already exists in the system.");
+            }
+
             Console.Write("Press any key to back");
             Console.ReadKey();
         }
-        static async void filterSalary()
+        static async void FilterSalary()
         {
             Console.Clear();
             Console.WriteLine("Please enter min salary");
