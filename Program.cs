@@ -122,7 +122,7 @@ namespace Homework
             foreach (var line in companyLines)
             {
                 var fields = line.Split(';');
-                var found = _dataSlot.Companies.Find(e => e.TaxNo == fields[2]);
+                var found = _dataSlot.Companies.Find(e => e.TaxNo == fields[1]);
                 if (found == null)
                 {
                     var biggerId = 0;
@@ -132,9 +132,8 @@ namespace Homework
                     }
                     _dataSlot.Companies.Add(new Company()
                     {
-                        Id = ++biggerId,
-                        Name = fields[1],
-                        TaxNo = fields[2]
+                        Name = fields[0],
+                        TaxNo = fields[1]
                     });
                 }
             }
