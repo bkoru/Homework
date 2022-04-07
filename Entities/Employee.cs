@@ -50,9 +50,9 @@ namespace Homework.Entities
             return startDate.AddDays(randomDays);
         }
 
-        public static string RandomTcNo()
+        public static string RandomTrId()
         {
-            string trId = "";
+            string trId = null;
 
             for (int i = 0; i < 1; i++)
             {
@@ -63,6 +63,7 @@ namespace Homework.Entities
             {
                 trId += rnd.Next(0, 9);
             }
+
             return trId;
         }
 
@@ -79,7 +80,13 @@ namespace Homework.Entities
 
             for (int i = 0; i < total; i++)
             {
-                var trId = RandomTcNo();
+                var trId = RandomTrId();
+
+                while (dataSlot.Employees.Where(e => e.TrId == trId).FirstOrDefault() != null)
+                {
+                    trId = RandomTrId();
+                }
+
                 var randomDate = RandomDate(startDate, endDate);
                 var employee = new Employee(++biggerId, "Emp-" + (i + 1).ToString(), randomDate, rnd.Next(4200,10000),trId);
                 dataSlot.Employees.Add(employee);

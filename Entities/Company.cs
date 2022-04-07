@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Homework.Entities
 {
@@ -6,15 +8,35 @@ namespace Homework.Entities
     {
         public int Id { get; set; }
         public string Name { get; set; }
+        public string TaxNo{ get; set; }
 
         public Company()
         {
         }
 
-        public Company(int id, string name)
+        public Company(int id, string name, string taxNo)
         {
             Id = id;
             Name = name;
+            TaxNo = taxNo;
+        }
+
+        public static string RandomTaxNo()
+        {
+            Random rnd = new Random();
+            string taxNo = null;
+
+            for (int i = 0; i < 1; i++)
+            {
+                taxNo += rnd.Next(1, 9);
+            }
+
+            for (int i = 1; i <= 9; i++)
+            {
+                taxNo += rnd.Next(0, 9);
+            }
+
+            return taxNo;
         }
 
         public static void CreateCompany(DataSlot dataSlot, int total)
@@ -26,7 +48,14 @@ namespace Homework.Entities
             }
             for (int i = 0; i < total; i++)
             {
-                var company = new Company(++biggerId, "Company" + (i + 1).ToString());
+                var taxNo = RandomTaxNo();
+
+                while (dataSlot.Companies.Where(e => e.TaxNo == taxNo).FirstOrDefault() != null)
+                {
+                    taxNo = RandomTaxNo();
+                }
+
+                var company = new Company(++biggerId, "Company" + (i + 1).ToString(), taxNo);
                 dataSlot.Companies.Add(company);
             }
         }

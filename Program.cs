@@ -19,6 +19,7 @@ namespace Homework
         
         static void Main(string[] args)
         {
+            //RestSharpTest();
             Menu();
 
             Console.ReadLine();
@@ -62,6 +63,12 @@ namespace Homework
             while (cki.Key != ConsoleKey.Escape);
         }
 
+        private static async void RestSharpTest()
+        {
+            var dataSource = new DemoApi.DataSource();
+            var companiesDto = await dataSource.GetAllCompanies();
+        }
+
         private static async void SaveToFile()
         {
             var CompanyPath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "Companies-" + DateTime.Now.ToString("yyyyMMddHHmm") + ".csv");
@@ -85,7 +92,7 @@ namespace Homework
 
         private static async void LoadCompany()
         {
-            var cmpStr = await FileHandler.ReadAsync(Path.Combine(Directory.GetCurrentDirectory(), "Data", "Companies-Sample.csv"));
+            string cmpStr = null;
             Console.WriteLine(" Do you want to use default file? (y/n)");
             ConsoleKeyInfo cki = Console.ReadKey();
             if (cki.Key == ConsoleKey.N)
@@ -115,7 +122,7 @@ namespace Homework
             foreach (var line in companyLines)
             {
                 var fields = line.Split(';');
-                var found = _dataSlot.Companies.Find(e => e.Name == fields[1]);
+                var found = _dataSlot.Companies.Find(e => e.TaxNo == fields[2]);
                 if (found == null)
                 {
                     var biggerId = 0;
@@ -127,6 +134,7 @@ namespace Homework
                     {
                         Id = ++biggerId,
                         Name = fields[1],
+                        TaxNo = fields[2]
                     });
                 }
             }
@@ -230,7 +238,7 @@ namespace Homework
 
             foreach (var company in _dataSlot.Companies)
             {
-                Console.WriteLine("{0}", company.Name);
+                Console.WriteLine("Name:{0} Tax No:{1}", company.Name, company.TaxNo);
             }
 
             if (true)
@@ -278,8 +286,12 @@ namespace Homework
             if (!ReadInputFromConsole("TR ID", e => new Regex(@"^[0-9]{11}$").IsMatch(e), out trIdInput))
                 return;
 
+            decimal salaryInput;
+            if (!ReadInputFromConsole("Salary", e => new Regex(@"^[0-9]{4,5}$").IsMatch(e), out salaryInput))
+                return;
+
             DateTime birthDate;
-            Console.WriteLine("Enter employee's birth date as day/month/year");
+            Console.WriteLine("Date of birth");
 
             string[] formats = { "dd/MM/yyyy", "dd/M/yyyy", "d/M/yyyy", "d/MM/yyyy",
                 "dd/MM/yy", "dd/M/yy", "d/M/yy", "d/MM/yy", "d.MM.yyyy"};
@@ -292,11 +304,8 @@ namespace Homework
                 Console.WriteLine("Your input is incorrect. Please input again.");
             }
 
-            Console.WriteLine("Enter employee's salary");
-            decimal salary = Convert.ToDecimal(Console.ReadLine());
-
             Employee user = new Employee();
-            user.Salary = salary;
+            user.Salary = salaryInput;
             user.BirthDate = birthDate;
             user.Name = nameInput;
             user.TrId = trIdInput;
@@ -376,6 +385,33 @@ namespace Homework
 
             return false;
         }
+
+        static bool ReadInputFromConsole(string label, Func<string, bool> onValidate, out decimal value)
+        {
+            value = 0;
+            bool isValid = false;
+            while (!isValid)
+            {
+                Console.Write(label + ": ");
+                var input = Console.ReadLine();
+                isValid = onValidate(input);
+
+                if (isValid)
+                {
+                    value = Convert.ToDecimal(input);
+                    return true;
+                }
+
+                Console.WriteLine("Invalid input.");
+                Console.WriteLine("Press ESC to cancel or press any key to try again");
+                ConsoleKeyInfo cki = Console.ReadKey();
+                if (cki.Key == ConsoleKey.Escape)
+                    break;
+            }
+
+            return false;
+        }
+
     }
     public class DataSlot
     {
