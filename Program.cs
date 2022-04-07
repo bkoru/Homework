@@ -19,7 +19,6 @@ namespace Homework
         
         static void Main(string[] args)
         {
-            //RestSharpTest();
             Menu();
 
             Console.ReadLine();
@@ -32,41 +31,41 @@ namespace Homework
             {
                 Console.Clear();
                 Console.WriteLine("### Main Menu ###");
-                Console.WriteLine("[1] Create random company");
-                Console.WriteLine("[2] Create random employee");
-                Console.WriteLine("[3] Create a new employee");
-                Console.WriteLine("[4] Load Company from Csv");
-                Console.WriteLine("[5] Load Employee from Csv");
-                Console.WriteLine("[6] List of companies");
-                Console.WriteLine("[7] List of employees");
-                Console.WriteLine("[8] Employees salary filter");
+                Console.WriteLine("[0] Create random company");
+                Console.WriteLine("[1] Create random employee");
+                Console.WriteLine("[2] Create a new employee");
+                Console.WriteLine("[3] Load Company from Csv");
+                Console.WriteLine("[4] Load Employee from Csv");
+                Console.WriteLine("[5] List of companies");
+                Console.WriteLine("[6] List of employees");
+                Console.WriteLine("[7] Employees salary filter");
+                Console.WriteLine("[8] Load Company from Web API");
+                Console.WriteLine("[9] Load Employee from Web API");
                 Console.WriteLine("[ESC] Exit");
                 cki = Console.ReadKey();
 
-                if (cki.Key == ConsoleKey.D1)
+                if (cki.Key == ConsoleKey.D0)
                     CreateCompany();
-                else if (cki.Key == ConsoleKey.D2)
+                else if (cki.Key == ConsoleKey.D1)
                     CreateRandomEmployee();
-                else if (cki.Key == ConsoleKey.D3)
+                else if (cki.Key == ConsoleKey.D2)
                     CreateEmployee();
-                else if (cki.Key == ConsoleKey.D4)
+                else if (cki.Key == ConsoleKey.D3)
                     LoadCompany();
-                else if (cki.Key == ConsoleKey.D5)
+                else if (cki.Key == ConsoleKey.D4)
                     LoadEmployee();
-                else if (cki.Key == ConsoleKey.D6)
+                else if (cki.Key == ConsoleKey.D5)
                     CompanyLists();
-                else if (cki.Key == ConsoleKey.D7)
+                else if (cki.Key == ConsoleKey.D6)
                     EmployeeLists();
-                else if (cki.Key == ConsoleKey.D8)
+                else if (cki.Key == ConsoleKey.D7)
                     FilterSalary();
+                else if (cki.Key == ConsoleKey.D8)
+                    LoadCompanyFromApi();
+                else if (cki.Key == ConsoleKey.D9)
+                    LoadEmployeeFromApi();
             }
             while (cki.Key != ConsoleKey.Escape);
-        }
-
-        private static async void RestSharpTest()
-        {
-            var dataSource = new DemoApi.DataSource();
-            var companiesDto = await dataSource.GetAllCompanies();
         }
 
         private static async void SaveToFile()
@@ -125,11 +124,6 @@ namespace Homework
                 var found = _dataSlot.Companies.Find(e => e.TaxNo == fields[1]);
                 if (found == null)
                 {
-                    var biggerId = 0;
-                    if (_dataSlot.Companies.Count > 0)
-                    {
-                        biggerId = _dataSlot.Companies.Max(e => e.Id);
-                    }
                     _dataSlot.Companies.Add(new Company()
                     {
                         Name = fields[0],
@@ -191,6 +185,39 @@ namespace Homework
             EmployeeLists();
         }
 
+        private async static void LoadCompanyFromApi()
+        {
+            var dataSource = new DemoApi.DataSource();
+            var companiesDto = await dataSource.GetAllCompanies();
+
+            foreach (var company in companiesDto)
+            {
+                _dataSlot.Companies.Add(new Company()
+                {
+                    Name = company.name,
+                    TaxNo = company.taxNo
+                });
+            }
+            CompanyLists();
+        }
+
+        private async static void LoadEmployeeFromApi()
+        {
+            var dataSource = new DemoApi.DataSource();
+            var employeesDto = await dataSource.GetAllEmployees();
+            
+            foreach (var employee in employeesDto)
+            {
+                _dataSlot.Employees.Add(new Employee()
+                {
+                    Name = employee.name,
+                    BirthDate = employee.birthDate,
+                    Salary = employee.salary,
+                    TrId = employee.tckn
+                });
+            }
+            EmployeeLists();
+        }
         private static void ConfigureSettings()
         {
             var builder = new ConfigurationBuilder()

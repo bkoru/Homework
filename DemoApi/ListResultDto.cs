@@ -10,6 +10,5 @@ namespace Homework.DemoApi
     {
         public List<T> items { get; set; } 
         public int totalCount { get; set; }
-
     }
 }

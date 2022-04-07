@@ -1,8 +1,6 @@
 ﻿using RestSharp;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Homework.DemoApi
@@ -14,15 +12,19 @@ namespace Homework.DemoApi
             string url = "https://demo.restback.io/api/GetAllCompanies";
             var client = new RestClient(url);
             var request = new RestRequest();
-            var response = await client.GetAsync(request);
-            Console.WriteLine(response.Content.ToString());
-            Console.Read();
-            throw new NotImplementedException();
+            var responseDto = await client.GetAsync<ResponseDto<ListResultDto<CompanyDto>>>(request);
+
+            return responseDto.result.items;
         }
 
         public async Task<List<EmployeeDto>> GetAllEmployees()
         {
-            throw new NotImplementedException();
+            string url = "https://demo.restback.io/api/GetAllEmployees";
+            var client = new RestClient(url);
+            var request = new RestRequest();
+            var responseDto = await client.GetAsync<ResponseDto<ListResultDto<EmployeeDto>>>(request);
+
+            return responseDto.result.items;
         }
     }
 }
