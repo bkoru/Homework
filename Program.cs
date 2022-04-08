@@ -24,51 +24,51 @@ namespace Homework
             Console.ReadLine();
         }
 
-        private static void Menu()
+        private static async Task Menu()
         {
             ConsoleKeyInfo cki;
             do
             {
                 Console.Clear();
                 Console.WriteLine("### Main Menu ###");
-                Console.WriteLine("[0] Create random company");
-                Console.WriteLine("[1] Create random employee");
-                Console.WriteLine("[2] Create a new employee");
-                Console.WriteLine("[3] Load Company from Csv");
-                Console.WriteLine("[4] Load Employee from Csv");
-                Console.WriteLine("[5] List of companies");
-                Console.WriteLine("[6] List of employees");
-                Console.WriteLine("[7] Employees salary filter");
-                Console.WriteLine("[8] Load Company from Web API");
-                Console.WriteLine("[9] Load Employee from Web API");
+                Console.WriteLine("[1] Create random company");
+                Console.WriteLine("[2] Create random employee");
+                Console.WriteLine("[3] Create a new employee");
+                Console.WriteLine("[4] Load Company from Csv");
+                Console.WriteLine("[5] Load Employee from Csv");
+                Console.WriteLine("[6] List of companies");
+                Console.WriteLine("[7] List of employees");
+                Console.WriteLine("[8] Employees salary filter");
+                Console.WriteLine("[9] Load Company from Web API");
+                Console.WriteLine("[0] Load Employee from Web API");
                 Console.WriteLine("[ESC] Exit");
                 cki = Console.ReadKey();
 
-                if (cki.Key == ConsoleKey.D0)
+                if (cki.Key == ConsoleKey.D1)
                     CreateCompany();
-                else if (cki.Key == ConsoleKey.D1)
-                    CreateRandomEmployee();
                 else if (cki.Key == ConsoleKey.D2)
-                    CreateEmployee();
+                    CreateRandomEmployee();
                 else if (cki.Key == ConsoleKey.D3)
-                    LoadCompany();
+                    CreateEmployee();
                 else if (cki.Key == ConsoleKey.D4)
-                    LoadEmployee();
+                    await LoadCompany ();
                 else if (cki.Key == ConsoleKey.D5)
-                    CompanyLists();
+                    await LoadEmployee ();
                 else if (cki.Key == ConsoleKey.D6)
-                    EmployeeLists();
+                    CompanyLists();
                 else if (cki.Key == ConsoleKey.D7)
-                    FilterSalary();
+                    EmployeeLists();
                 else if (cki.Key == ConsoleKey.D8)
-                    LoadCompanyFromApi();
+                    await FilterSalary ();
                 else if (cki.Key == ConsoleKey.D9)
-                    LoadEmployeeFromApi();
+                    await LoadCompanyFromApi();
+                else if (cki.Key == ConsoleKey.D0)
+                    await LoadEmployeeFromApi();
             }
             while (cki.Key != ConsoleKey.Escape);
         }
 
-        private static async void SaveToFile()
+        private static async Task SaveToFile()
         {
             var CompanyPath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "Companies-" + DateTime.Now.ToString("yyyyMMddHHmm") + ".csv");
             var companyContent = "Name;";
@@ -89,7 +89,7 @@ namespace Homework
             await FileHandler.WriteAsync(employeePath, employeeContent);
         }
 
-        private static async void LoadCompany()
+        private static async Task LoadCompany()
         {
             string cmpStr = null;
             Console.WriteLine(" Do you want to use default file? (y/n)");
@@ -134,7 +134,7 @@ namespace Homework
             CompanyLists();
         }
 
-        public static async void LoadEmployee()
+        public static async Task LoadEmployee()
         {
             var empStr = await FileHandler.ReadAsync(Path.Combine(Directory.GetCurrentDirectory(), "Data", "Employees-Sample.csv"));
             Console.WriteLine(" Do you want to use default file? (y/n)");
@@ -185,39 +185,48 @@ namespace Homework
             EmployeeLists();
         }
 
-        private async static void LoadCompanyFromApi()
+        private async static Task LoadCompanyFromApi()
         {
             var dataSource = new DemoApi.DataSource();
             var companiesDto = await dataSource.GetAllCompanies();
 
             foreach (var company in companiesDto)
             {
-                _dataSlot.Companies.Add(new Company()
+                var found = _dataSlot.Companies.Find(e => e.TaxNo == company.taxNo);
+                if (found == null)
                 {
-                    Name = company.name,
-                    TaxNo = company.taxNo
-                });
+                    _dataSlot.Companies.Add(new Company()
+                    {
+                        Name = company.name,
+                        TaxNo = company.taxNo
+                    });
+                }
             }
             CompanyLists();
         }
 
-        private async static void LoadEmployeeFromApi()
+        private async static Task LoadEmployeeFromApi()
         {
             var dataSource = new DemoApi.DataSource();
             var employeesDto = await dataSource.GetAllEmployees();
             
             foreach (var employee in employeesDto)
             {
-                _dataSlot.Employees.Add(new Employee()
+                var found = _dataSlot.Employees.Find(e => e.TrId == employee.tckn);
+                if (found == null)
                 {
-                    Name = employee.name,
-                    BirthDate = employee.birthDate,
-                    Salary = employee.salary,
-                    TrId = employee.tckn
-                });
+                    _dataSlot.Employees.Add(new Employee()
+                    {
+                        Name = employee.name,
+                        BirthDate = employee.birthDate,
+                        Salary = employee.salary,
+                        TrId = employee.tckn
+                    });
+                }
             }
             EmployeeLists();
         }
+
         private static void ConfigureSettings()
         {
             var builder = new ConfigurationBuilder()
@@ -272,8 +281,8 @@ namespace Homework
 
             }
 
-            Console.Write("\r\nPress Enter to return to Main Menu");
-            Console.ReadLine();
+            Console.Write("Press any key to back");
+            Console.ReadKey();
         }
 
         private static void EmployeeLists()
@@ -295,8 +304,8 @@ namespace Homework
                 Console.WriteLine("{0}: {1} TL", employee.Name, employee.Salary);
             }
 
-            Console.Write("\r\nPress Enter to return to Main Menu");
-            Console.ReadLine();
+            Console.WriteLine("Press any key to back");
+            Console.ReadKey();
         }
 
         static void CreateEmployee()
@@ -351,7 +360,7 @@ namespace Homework
             Console.Write("Press any key to back");
             Console.ReadKey();
         }
-        static async void FilterSalary()
+        static async Task FilterSalary()
         {
             Console.Clear();
             Console.WriteLine("Please enter min salary");
