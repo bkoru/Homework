@@ -17,11 +17,9 @@ namespace Homework
 
         private static AppSettings _appSettings;
         
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
-            Menu();
-
-            Console.ReadLine();
+            await Menu();
         }
 
         private static async Task Menu()
@@ -51,19 +49,19 @@ namespace Homework
                 else if (cki.Key == ConsoleKey.D3)
                     CreateEmployee();
                 else if (cki.Key == ConsoleKey.D4)
-                    await LoadCompany ();
+                    await LoadCompany();
                 else if (cki.Key == ConsoleKey.D5)
-                    await LoadEmployee ();
+                    await LoadEmployee();
                 else if (cki.Key == ConsoleKey.D6)
                     CompanyLists();
                 else if (cki.Key == ConsoleKey.D7)
                     EmployeeLists();
                 else if (cki.Key == ConsoleKey.D8)
-                    await FilterSalary ();
+                    await FilterSalary();
                 else if (cki.Key == ConsoleKey.D9)
                     await LoadCompanyFromApi();
                 else if (cki.Key == ConsoleKey.D0)
-                    await LoadEmployeeFromApi();
+                    await LoadEmployeeFromApi();   
             }
             while (cki.Key != ConsoleKey.Escape);
         }
@@ -273,7 +271,7 @@ namespace Homework
 
             foreach (var company in _dataSlot.Companies)
             {
-                Console.WriteLine("Name:{0} Tax No:{1}", company.Name, company.TaxNo);
+                Console.WriteLine("Name:{0} Tax No:{1} Id:{2}", company.Name, company.TaxNo, company.Id);
             }
 
             if (true)
@@ -304,7 +302,7 @@ namespace Homework
                 Console.WriteLine("{0}: {1} TL", employee.Name, employee.Salary);
             }
 
-            Console.WriteLine("Press any key to back");
+            Console.Write("Press any key to back");
             Console.ReadKey();
         }
 
