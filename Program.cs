@@ -1,8 +1,12 @@
-﻿using Homework.Entities;
+﻿using CsvHelper;
+using CsvHelper.Configuration;
+using Homework.CsvHelper;
+using Homework.Entities;
 using Homework.Settings;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -49,9 +53,9 @@ namespace Homework
                 else if (cki.Key == ConsoleKey.D3)
                     CreateEmployee();
                 else if (cki.Key == ConsoleKey.D4)
-                    await LoadCompany();
+                    LoadCompanyCsvHelper();
                 else if (cki.Key == ConsoleKey.D5)
-                    await LoadEmployee();
+                    LoadEmployeeCsvHelper();
                 else if (cki.Key == ConsoleKey.D6)
                     CompanyLists();
                 else if (cki.Key == ConsoleKey.D7)
@@ -116,6 +120,12 @@ namespace Homework
             if (companyLines.Count > 0)
                 companyLines.RemoveAt(0);
 
+            var biggerId = 0;
+            if (_dataSlot.Companies.Count > 0)
+            {
+                biggerId = _dataSlot.Companies.Max(e => e.Id);
+            }
+
             foreach (var line in companyLines)
             {
                 var fields = line.Split(';');
@@ -124,6 +134,7 @@ namespace Homework
                 {
                     _dataSlot.Companies.Add(new Company()
                     {
+                        Id = ++biggerId,
                         Name = fields[0],
                         TaxNo = fields[1]
                     });
@@ -132,9 +143,77 @@ namespace Homework
             CompanyLists();
         }
 
+        public static void LoadCompanyCsvHelper()
+        {
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "Companies-Sample.csv");
+            using (var reader = new StreamReader(filePath))
+            {
+                var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+                {
+                    Delimiter = ";"
+                };
+                using (var csv = new CsvReader(reader, config))
+                {
+                    var records = csv.GetRecords<CompanyCsvHelperDto>();
+                    var biggerId = 0;
+                    if (_dataSlot.Companies.Count > 0)
+                    {
+                        biggerId = _dataSlot.Companies.Max(e => e.Id);
+                    }
+
+                    foreach (var company in records)
+                    {
+                        var found = _dataSlot.Companies.Find(e => e.TaxNo == company.TaxNo);
+                        if (found == null)
+                        {
+                            _dataSlot.Companies.Add(new Company()
+                            {
+                                Id = ++biggerId,
+                                Name = company.Name,
+                                TaxNo = company.TaxNo
+                            });
+                        }
+                    }
+                    CompanyLists();
+                }
+            }
+        }
+
+        public static void LoadEmployeeCsvHelper()
+        {
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "Employees-Sample.csv");
+            using (var reader = new StreamReader(filePath))
+            {
+                var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+                {
+                    Delimiter = ";"
+                };
+                using (var csv = new CsvReader(reader, config))
+                {
+                    var records = csv.GetRecords<EmployeeCsvHelperDto>();
+
+                    foreach (var employee in records)
+                    {
+                        var found = _dataSlot.Employees.Find(e => e.TrId == employee.TrId);
+                        if (found == null)
+                        {
+                            _dataSlot.Employees.Add(new Employee()
+                            {
+                                Name = employee.Name,
+                                BirthDate = employee.BirthDate,
+                                Salary = employee.Salary,
+                                TrId = employee.TrId
+                            });
+                        }
+                    }
+                    EmployeeLists();
+                }
+            }
+        }
+
         public static async Task LoadEmployee()
         {
-            var empStr = await FileHandler.ReadAsync(Path.Combine(Directory.GetCurrentDirectory(), "Data", "Employees-Sample.csv"));
+            string empStr = null;
             Console.WriteLine(" Do you want to use default file? (y/n)");
             ConsoleKeyInfo cki = Console.ReadKey();
 
