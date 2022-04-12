@@ -49,7 +49,7 @@ namespace Homework.Entities
                     taxNo = RandomTaxNo();
                 }
 
-                var company = new Company(++biggerId, "Company" + (i + 1).ToString(), taxNo);
+                var company = new Company(++biggerId, "Company" + biggerId, taxNo);
                 dataSlot.Companies.Add(company);
             }
         }

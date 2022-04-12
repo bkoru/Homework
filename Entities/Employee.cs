@@ -88,7 +88,7 @@ namespace Homework.Entities
                 }
 
                 var randomDate = RandomDate(startDate, endDate);
-                var employee = new Employee(++biggerId, "Emp-" + (i + 1).ToString(), randomDate, rnd.Next(4200,10000),trId);
+                var employee = new Employee(++biggerId, "Emp-" + biggerId, randomDate, rnd.Next(4200,10000),trId);
                 dataSlot.Employees.Add(employee);
             }
         }

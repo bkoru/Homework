@@ -61,7 +61,7 @@ namespace Homework
                 else if (cki.Key == ConsoleKey.D7)
                     EmployeeLists();
                 else if (cki.Key == ConsoleKey.D8)
-                    await FilterSalary();
+                    FilterSalaryCsvHelper();
                 else if (cki.Key == ConsoleKey.D9)
                     await LoadCompanyFromApi();
                 else if (cki.Key == ConsoleKey.D0)
@@ -211,6 +211,46 @@ namespace Homework
             }
         }
 
+        public static void FilterSalaryCsvHelper()
+        {
+            Console.Clear();
+            Console.WriteLine("Please enter min salary");
+            decimal min = Convert.ToDecimal(Console.ReadLine());
+            Console.WriteLine("Please enter max salary");
+            decimal max = Convert.ToDecimal(Console.ReadLine());
+
+            var resultSalary = _dataSlot.Employees.Where(e => e.Salary >= min && e.Salary <= max);
+
+            foreach (Employee employee in resultSalary)
+            {
+                Console.WriteLine("{0}: {1} TL", employee.Name, employee.Salary.ToString());
+            }
+
+            Console.WriteLine(" Do you want to write this data to file? (y/n)");
+            ConsoleKeyInfo cki = Console.ReadKey();
+            if (cki.Key == ConsoleKey.Y)
+            {
+                using (var writer = new StreamWriter(Path.Combine(Directory.GetCurrentDirectory(), "Data", "Employees-" + DateTime.Now.ToString("yyyyMMddHHmm") + ".csv")))
+                using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
+                {
+                    csv.Context.RegisterClassMap<FilterSalaryMap>();
+                    csv.WriteHeader<Employee>();
+                    csv.NextRecord();
+
+                    foreach (var item in resultSalary)
+                    {
+                        csv.WriteRecord(item);
+                        csv.NextRecord();
+                    }
+                }
+            }
+            else if (cki.Key == ConsoleKey.N)
+            {
+                Console.Write("\r\nPress Enter to return to Main Menu");
+                Console.ReadLine();
+            }
+        }
+
         public static async Task LoadEmployee()
         {
             string empStr = null;
@@ -353,11 +393,6 @@ namespace Homework
                 Console.WriteLine("Name:{0} Tax No:{1} Id:{2}", company.Name, company.TaxNo, company.Id);
             }
 
-            if (true)
-            {
-
-            }
-
             Console.Write("Press any key to back");
             Console.ReadKey();
         }
@@ -369,8 +404,8 @@ namespace Homework
 
             foreach (var employee in _dataSlot.Employees)
             {
-                Console.WriteLine("Name:{0} BirthDate:{1} Company Name:{2} Company Id:{3} Salary:{4} TL Age:{5} TR Id:{6}",
-                    employee.Name, employee.BirthDate.ToString("dd.MM.yyyy"), employee.Company?.Name, employee.Company?.Id, employee.Salary, employee.Age, employee.TrId);
+                Console.WriteLine("Id:{0} Name:{1} BirthDate:{2} Company Name:{3} Company Id:{4} Salary:{5} TL Age:{6} TR Id:{7}",
+                    employee.Id, employee.Name, employee.BirthDate.ToString("dd.MM.yyyy"), employee.Company?.Name, employee.Company?.Id, employee.Salary, employee.Age, employee.TrId);
             }
 
             Console.WriteLine("----------------Employee list order by Salary----------------");
@@ -421,6 +456,13 @@ namespace Homework
             user.BirthDate = birthDate;
             user.Name = nameInput;
             user.TrId = trIdInput;
+
+            var biggerId = 0;
+            if (_dataSlot.Employees.Count > 0)
+            {
+                biggerId = _dataSlot.Employees.Max(e => e.Id);
+            }
+            user.Id = biggerId + 1;
 
             var found = _dataSlot.Employees.Find(e => e.TrId == trIdInput);
 
