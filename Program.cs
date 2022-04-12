@@ -1,6 +1,7 @@
 ﻿using CsvHelper;
 using CsvHelper.Configuration;
 using Homework.CsvHelper;
+using Homework.DemoApi;
 using Homework.Entities;
 using Homework.Settings;
 using Microsoft.Extensions.Configuration;
@@ -20,6 +21,8 @@ namespace Homework
         private static DataSlot _dataSlot = new DataSlot();
 
         private static AppSettings _appSettings;
+
+        private static DataSource _dataSource = new DataSource();
         
         static async Task Main(string[] args)
         {
@@ -304,8 +307,7 @@ namespace Homework
 
         private async static Task LoadCompanyFromApi()
         {
-            var dataSource = new DemoApi.DataSource();
-            var companiesDto = await dataSource.GetAllCompanies();
+            var companiesDto = await _dataSource.GetAllCompanies();
 
             foreach (var company in companiesDto)
             {
@@ -324,8 +326,7 @@ namespace Homework
 
         private async static Task LoadEmployeeFromApi()
         {
-            var dataSource = new DemoApi.DataSource();
-            var employeesDto = await dataSource.GetAllEmployees();
+            var employeesDto = await _dataSource.GetAllEmployees();
             
             foreach (var employee in employeesDto)
             {
@@ -536,7 +537,6 @@ namespace Homework
                 if (cki.Key == ConsoleKey.Escape)
                     break;
             }
-
             return false;
         }
 
@@ -562,7 +562,6 @@ namespace Homework
                 if (cki.Key == ConsoleKey.Escape)
                     break;
             }
-
             return false;
         }
 
