@@ -669,7 +669,7 @@ namespace Homework
 
         public static void SaveChanges()
         {
-            if ((_dataSlot.Employees != null) && _dataSlot.Employees.Any() == true)
+            if (_dataSlot.Employees.Any() == true)
             {
                 using (var writer = new StreamWriter(Path.Combine(Directory.GetCurrentDirectory(), "Data", "Employees-" + DateTime.Now.ToString("yyyyMMddHHmm") + ".csv")))
                 using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
@@ -697,7 +697,7 @@ namespace Homework
                 Console.ReadKey();
             }
 
-            if ((_dataSlot.Companies != null) && _dataSlot.Companies.Any() == true)
+            if ( _dataSlot.Companies.Any() == true)
             {
                 using (var writer = new StreamWriter(Path.Combine(Directory.GetCurrentDirectory(), "Data", "Companies-" + DateTime.Now.ToString("yyyyMMddHHmm") + ".csv")))
                 using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
