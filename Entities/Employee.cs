@@ -1,4 +1,8 @@
-﻿using System;
+﻿using CsvHelper;
+using CsvHelper.Configuration.Attributes;
+using System;
+using System.Globalization;
+using System.IO;
 using System.Linq;
 
 namespace Homework.Entities
@@ -7,6 +11,7 @@ namespace Homework.Entities
     {
         public int Id { get; set; }
         public string Name { get; set; }
+        [Format("dd-MM-yyyy")]
         public DateTime BirthDate { get; set; }
         public Company Company { get; set; }
         public decimal Salary { get; set; }
