@@ -76,10 +76,10 @@ namespace Homework.Entities
             int companiesCount = dataSlot.Companies.Count;
             var startDate = new DateTime(1950, 01, 01);
             var endDate = new DateTime(2004, 01, 01);
-            var biggerId = 0;
+            var nextId = 1;
             if (dataSlot.Employees.Count > 0)
             {
-                biggerId = dataSlot.Employees.Max(e => e.Id);
+                nextId = dataSlot.Employees.Max(e => e.Id);
             }
 
             for (int i = 0; i < total; i++)
@@ -92,7 +92,7 @@ namespace Homework.Entities
                 }
 
                 var randomDate = RandomDate(startDate, endDate);
-                var employee = new Employee(++biggerId, "Emp-" + biggerId, randomDate, rnd.Next(4200,10000),trId);
+                var employee = new Employee(nextId++, "Emp-" + nextId, randomDate, rnd.Next(4200,10000),trId);
                 dataSlot.Employees.Add(employee);
             }
         }

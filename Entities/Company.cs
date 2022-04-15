@@ -35,10 +35,10 @@ namespace Homework.Entities
 
         public static void CreateCompany(DataSlot dataSlot, int total)
         {
-            var biggerId = 0;
+            var nextId = 1;
             if (dataSlot.Companies.Count > 0)
             {
-                biggerId = dataSlot.Companies.Max(e => e.Id);
+                nextId = dataSlot.Companies.Max(e => e.Id);
             }
             for (int i = 0; i < total; i++)
             {
@@ -49,7 +49,7 @@ namespace Homework.Entities
                     taxNo = RandomTaxNo();
                 }
 
-                var company = new Company(++biggerId, "Company" + biggerId, taxNo);
+                var company = new Company(nextId++, "Company" + nextId, taxNo);
                 dataSlot.Companies.Add(company);
             }
         }

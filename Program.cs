@@ -78,79 +78,6 @@ namespace Homework
             while (cki.Key != ConsoleKey.Escape);
         }
 
-        private static async Task SaveToFile()
-        {
-            var CompanyPath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "Companies-" + DateTime.Now.ToString("yyyyMMddHHmm") + ".csv");
-            var companyContent = "Name;";
-            foreach (var item in _dataSlot.Companies)
-            {
-                companyContent += Environment.NewLine + string.Join(';', item.Name);
-            }
-
-            await FileHandler.WriteAsync(CompanyPath, companyContent);
-
-            var employeePath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "Employees-" + DateTime.Now.ToString("yyyyMMddHHmm") + ".csv");
-            var employeeContent = "Name;BirthDate;CompanyName;Salary;TrId";
-            foreach (var item in _dataSlot.Employees)
-            {
-                employeeContent += Environment.NewLine + string.Join(';', item.Name, item.BirthDate.ToString("dd.MM.yyyy"), item.Company?.Name, item.Salary.ToString(), item.TrId);
-            }
-
-            await FileHandler.WriteAsync(employeePath, employeeContent);
-        }
-
-        private static async Task LoadCompany()
-        {
-            string cmpStr = null;
-            Console.WriteLine(" Do you want to use default file? (y/n)");
-            ConsoleKeyInfo cki = Console.ReadKey();
-            if (cki.Key == ConsoleKey.N)
-            {
-                Console.WriteLine("Please enter valid path");
-                string filePath = Console.ReadLine();
-                if (File.Exists(filePath))
-                {
-                    cmpStr = await FileHandler.ReadAsync(filePath);
-                }
-                else
-                {
-                    Console.WriteLine("The path is invalid");
-                    Console.Write("Press any key to back");
-                    Console.ReadKey();
-                }
-            }
-            else if (cki.Key == ConsoleKey.Y)
-            {
-                cmpStr = await FileHandler.ReadAsync(Path.Combine(Directory.GetCurrentDirectory(), "Data", "Companies-Sample.csv"));
-            }
-
-            var companyLines = cmpStr.Split(Environment.NewLine).ToList().Where(e => !string.IsNullOrWhiteSpace(e)).ToList();
-            if (companyLines.Count > 0)
-                companyLines.RemoveAt(0);
-
-            var biggerId = 0;
-            if (_dataSlot.Companies.Count > 0)
-            {
-                biggerId = _dataSlot.Companies.Max(e => e.Id);
-            }
-
-            foreach (var line in companyLines)
-            {
-                var fields = line.Split(';');
-                var found = _dataSlot.Companies.Find(e => e.TaxNo == fields[1]);
-                if (found == null)
-                {
-                    _dataSlot.Companies.Add(new Company()
-                    {
-                        Id = ++biggerId,
-                        Name = fields[0],
-                        TaxNo = fields[1]
-                    });
-                }
-            }
-            CompanyLists();
-        }
-
         public static void LoadCompanyCsvHelper()
         {
             string filePath = null;
@@ -160,17 +87,15 @@ namespace Homework
 
             if (cki.Key == ConsoleKey.N)
             {
-                Console.WriteLine("Please enter valid path");
-                string directory = Console.ReadLine();
-                if (File.Exists(directory))
+                Console.WriteLine("\nPlease enter valid path");
+                filePath = Console.ReadLine();
+
+                if (!File.Exists(filePath))
                 {
-                    filePath = directory;
-                }
-                else
-                {
-                    Console.WriteLine("The path is invalid");
-                    Console.Write("Press any key to back");
+                    Console.WriteLine("File you entered doesn't exist");
+                    Console.WriteLine("\r\n Press Enter to return to Main Menu");
                     Console.ReadKey();
+                    return;
                 }
             }
             else if (cki.Key == ConsoleKey.Y)
@@ -178,41 +103,63 @@ namespace Homework
                 filePath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "Companies-Sample.csv");
             }
 
-            using (var reader = new StreamReader(filePath))
+            if (filePath != null)
             {
-                var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+                using (var reader = new StreamReader(filePath))
                 {
-                    Delimiter = ";"
-                };
-                using (var csv = new CsvReader(reader, config))
-                {
-                    var records = csv.GetRecords<CompanyCsvHelperDto>();
-                    var biggerId = 0;
-                    if (_dataSlot.Companies.Count > 0)
+                    var config = new CsvConfiguration(CultureInfo.InvariantCulture)
                     {
-                        biggerId = _dataSlot.Companies.Max(e => e.Id);
-                    }
+                        Delimiter = ";",
+                        HeaderValidated = null,
+                        MissingFieldFound = null
+                    };
 
-                    foreach (var company in records)
+                    try
                     {
-                        var found = _dataSlot.Companies.Find(e => e.TaxNo == company.TaxNo || e.Name == company.TaxNo);
-                        if (found == null)
+                        using (var csv = new CsvReader(reader, config))
                         {
-                            _dataSlot.Companies.Add(new Company()
+                            var records = csv.GetRecords<CompanyCsvHelperDto>();
+                            csv.Context.RegisterClassMap<CompanyMap>();
+
+                            var nextId = 1;
+                            if (_dataSlot.Companies.Count > 0)
                             {
-                                Id = ++biggerId,
-                                Name = company.Name,
-                                TaxNo = company.TaxNo
-                            });
+                                nextId = _dataSlot.Companies.Max(c => c.Id);
+                            }
+
+                            foreach (var company in records)
+                            {
+                                var found = _dataSlot.Companies.Find(c => c.TaxNo == company.TaxNo || c.Name == company.Name);
+                                if (found == null)
+                                {
+                                    _dataSlot.Companies.Add(new Company()
+                                    {
+                                        Id = nextId++,
+                                        Name = company.Name,
+                                        TaxNo = company.TaxNo
+                                    });
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Company could not be added. Because the tax number " + company.TaxNo + " or the company name " + company.Name + " already exists in the system.");
+                                }
+                            }
+                            Console.ReadKey();
+                            CompanyLists();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        if (ex is FieldValidationException)
+                        {
+                            Console.WriteLine("Invalid file format");
                         }
                         else
                         {
-                            Console.WriteLine("Company named could not be added. Because the tax number " + company.TaxNo + " or the company name " + company.Name + " already exists in the system.");
-                            Console.Write("Press any key");
-                            Console.ReadKey();
+                            Console.WriteLine(ex.Message);
                         }
+                        Console.ReadKey();
                     }
-                    CompanyLists();
                 }
             }
         }
@@ -221,12 +168,12 @@ namespace Homework
         {
             string filePath = null;
             Console.Clear();
-            Console.WriteLine(" Do you want to use default file? (y/n)");
+            Console.WriteLine("Do you want to use default file? (y/n)");
             ConsoleKeyInfo cki = Console.ReadKey();
 
             if (cki.Key == ConsoleKey.N)
             {
-                Console.WriteLine("Please enter valid path");
+                Console.WriteLine("\nPlease enter valid path");
                 string directory = Console.ReadLine();
                 if (File.Exists(directory))
                 {
@@ -244,97 +191,68 @@ namespace Homework
                 filePath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "Employees-Sample.csv");
             }
 
-            using (var reader = new StreamReader(filePath))
+            if (filePath != null)
             {
-                var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+                using (var reader = new StreamReader(filePath))
                 {
-                    Delimiter = ";"
-                };
-                using (var csv = new CsvReader(reader, config))
-                {
-                    var records = csv.GetRecords<EmployeeCsvHelperDto>();
-
-                    foreach (var employee in records)
+                    var config = new CsvConfiguration(CultureInfo.InvariantCulture)
                     {
-                        var biggerId = 0;
-                        if (_dataSlot.Employees.Count > 0)
-                        {
-                            biggerId = _dataSlot.Employees.Max(e => e.Id);
-                        }
+                        Delimiter = ";",
+                        HeaderValidated = null,
+                        MissingFieldFound = null
+                    };
 
-                        var found = _dataSlot.Employees.Find(e => e.TrId == employee.TrId);
-                        if (found == null)
+                    try
+                    {
+                        using (var csv = new CsvReader(reader, config))
                         {
-                            _dataSlot.Employees.Add(new Employee()
+                            csv.Context.RegisterClassMap<EmployeeMap>();
+                            var records = csv.GetRecords<EmployeeCsvHelperDto>();
+
+                            foreach (var employee in records)
                             {
-                                Name = employee.Name,
-                                BirthDate = employee.BirthDate,
-                                Salary = employee.Salary,
-                                TrId = employee.TrId,
-                                Id = ++biggerId
-                            });
+                                var nextId = 1;
+
+                                if (_dataSlot.Employees.Count > 0)
+                                {
+                                    nextId = _dataSlot.Employees.Max(e => e.Id);
+                                }
+
+                                var found = _dataSlot.Employees.Find(e => e.TrId == employee.TrId);
+                                if (found == null)
+                                {
+                                    _dataSlot.Employees.Add(new Employee()
+                                    {
+                                        Name = employee.Name,
+                                        BirthDate = employee.BirthDate,
+                                        Salary = employee.Salary,
+                                        TrId = employee.TrId,
+                                        Id = nextId++
+                                    });
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Employee could not be added.Because TR Id: " + employee.TrId + " already exists in the system.");
+                                }
+                            }
+                            Console.ReadKey();
+                            EmployeeLists();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        if (ex is FieldValidationException)
+                        {
+                            Console.WriteLine("Invalid file format");
                         }
                         else
                         {
-                            Console.WriteLine("The employee named " + employee.Name + " could not be added. Because the ID number " + employee.TrId + " already exists in the system.");
-                            Console.Write("Press any key");
-                            Console.ReadKey();
+                            Console.WriteLine(ex.Message);
                         }
+                        Console.ReadKey();
                     }
-                    EmployeeLists();
                 }
             }
-        }
-
-        public static async Task LoadEmployee()
-        {
-            string empStr = null;
-            Console.WriteLine(" Do you want to use default file? (y/n)");
-            ConsoleKeyInfo cki = Console.ReadKey();
-
-            if (cki.Key == ConsoleKey.N)
-            {
-                Console.WriteLine("Please enter valid path");
-                string filePath = Console.ReadLine();
-                if (File.Exists(filePath))
-                {
-                    empStr = await FileHandler.ReadAsync(filePath);
-                }
-                else
-                {
-                    Console.WriteLine("The path is invalid");
-                    Console.Write("Press any key to back");
-                    Console.ReadKey();
-                }
-            }
-            else if (cki.Key == ConsoleKey.Y)
-            {
-                empStr = await FileHandler.ReadAsync(Path.Combine(Directory.GetCurrentDirectory(), "Data", "Employees-Sample.csv"));
-            }
-
-            var employeeLines = empStr.Split(Environment.NewLine).ToList().Where(e => !string.IsNullOrWhiteSpace(e)).ToList();
-            if (employeeLines.Count > 0)
-            {
-                employeeLines.RemoveAt(0);
-            }
-
-            foreach (var line in employeeLines)
-            {
-                var fields = line.Split(';');
-                var found = _dataSlot.Employees.Find(e => e.TrId == fields[4]);
-                if (found == null)
-                {
-                    _dataSlot.Employees.Add(new Employee()
-                    {
-                        Name = fields[0],
-                        BirthDate = DateTime.ParseExact(fields[1], "dd.MM.yyyy", System.Globalization.CultureInfo.InvariantCulture),
-                        Company = _dataSlot.Companies.Where(e => e.Name == fields[2]).FirstOrDefault(),
-                        Salary = decimal.Parse(fields[3]),
-                        TrId = fields[4]
-                    });
-                }
-            }
-            EmployeeLists();
         }
 
         public static void FilterSalaryCsvHelper()
@@ -359,7 +277,7 @@ namespace Homework
                 using (var writer = new StreamWriter(Path.Combine(Directory.GetCurrentDirectory(), "Data", "Employees-" + DateTime.Now.ToString("yyyyMMddHHmm") + ".csv")))
                 using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
                 {
-                    csv.Context.RegisterClassMap<EmployeeMap>();
+                    csv.Context.RegisterClassMap<FilterMap>();
                     csv.WriteHeader<Employee>();
                     csv.NextRecord();
 
@@ -385,10 +303,10 @@ namespace Homework
 
             foreach (var company in companiesDto)
             {
-                var biggerId = 0;
+                var nextId = 1;
                 if (_dataSlot.Companies.Count > 0)
                 {
-                    biggerId = _dataSlot.Companies.Max(c => c.Id);
+                    nextId = _dataSlot.Companies.Max(c => c.Id);
                 }
 
                 var found = _dataSlot.Companies.Find(c => c.TaxNo == company.taxNo || c.Name == company.name);
@@ -398,7 +316,7 @@ namespace Homework
                     {
                         Name = company.name,
                         TaxNo = company.taxNo,
-                        Id = ++biggerId
+                        Id = nextId++
                     });
                 }
                 else
@@ -419,10 +337,10 @@ namespace Homework
             
             foreach (var employee in employeesDto)
             {
-                var biggerId = 0;
+                var nextId = 1;
                 if (_dataSlot.Employees.Count > 0)
                 {
-                    biggerId = _dataSlot.Employees.Max(e => e.Id);
+                    nextId = _dataSlot.Employees.Max(e => e.Id);
                 }
 
                 var found = _dataSlot.Employees.Find(e => e.TrId == employee.tckn);
@@ -434,7 +352,7 @@ namespace Homework
                         BirthDate = employee.birthDate,
                         Salary = employee.salary,
                         TrId = employee.tckn,
-                        Id = ++biggerId
+                        Id = nextId++
                     });
                 }
                 else
@@ -447,19 +365,10 @@ namespace Homework
             EmployeeLists();
         }
 
-        private static void ConfigureSettings()
-        {
-            var builder = new ConfigurationBuilder()
-               .SetBasePath(Directory.GetCurrentDirectory())
-               .AddJsonFile("appsettings.json", optional: false);
-            var config = builder.Build();
-            _appSettings = config.Get<AppSettings>();
-        }
-
         private static void CreateRandomCompany()
         {
             Console.Clear();
-            int companyCount = 0;
+            int companyCount;
             Console.Write("Eklemek istediğiniz şirket sayısını giriniz: ");
             while (!int.TryParse(Console.ReadLine(), out companyCount))
             {
@@ -473,7 +382,7 @@ namespace Homework
         private static void CreateRandomEmployee()
         {
             Console.Clear();
-            int employeeCount = 0;
+            int employeeCount;
             Console.Write("Eklemek istediğiniz çalışan sayısını giriniz: ");
 
             while (!int.TryParse(Console.ReadLine(), out employeeCount))
@@ -507,8 +416,8 @@ namespace Homework
 
             foreach (var employee in _dataSlot.Employees)
             {
-                Console.WriteLine("Id:{0} Name:{1} BirthDate:{2} Company Name:{3} Company Id:{4} Salary:{5} TL Age:{6} TR Id:{7}",
-                    employee.Id, employee.Name, employee.BirthDate.ToString("dd.MM.yyyy"), employee.Company?.Name, employee.Company?.Id, employee.Salary, employee.Age, employee.TrId);
+                Console.WriteLine("Id:{0} Name:{1} BirthDate:{2} Salary:{3} TL Age:{4} TR Id:{5}",
+                    employee.Id, employee.Name, employee.BirthDate.ToString("dd.MM.yyyy"), employee.Salary, employee.Age, employee.TrId);
             }
 
             Console.WriteLine("----------------Employee list order by Salary----------------");
@@ -533,7 +442,7 @@ namespace Homework
                 return;
 
             string trIdInput;
-            if (!ReadInputFromConsole("TR ID", e => new Regex(@"^[0-9]{11}$").IsMatch(e), out trIdInput))
+            if (!ReadInputFromConsole("TR ID", e => new Regex(@"^[1-9]{1}[0-9]{10}$").IsMatch(e), out trIdInput))
                 return;
 
             decimal salaryInput;
@@ -554,18 +463,20 @@ namespace Homework
                 Console.WriteLine("Your input is incorrect. Please input again.");
             }
 
-            Employee user = new Employee();
-            user.Salary = salaryInput;
-            user.BirthDate = birthDate;
-            user.Name = nameInput;
-            user.TrId = trIdInput;
+            Employee user = new Employee
+            {
+                Salary = salaryInput,
+                BirthDate = birthDate,
+                Name = nameInput,
+                TrId = trIdInput
+            };
 
-            var biggerId = 0;
+            var nextId = 1;
             if (_dataSlot.Employees.Count > 0)
             {
-                biggerId = _dataSlot.Employees.Max(e => e.Id);
+                nextId = _dataSlot.Employees.Max(e => e.Id);
             }
-            user.Id = ++biggerId;
+            user.Id = nextId++;
 
             var found = _dataSlot.Employees.Find(e => e.TrId == trIdInput);
 
@@ -582,40 +493,6 @@ namespace Homework
             Console.Write("Press any key to back");
             Console.ReadKey();
         }
-        static async Task FilterSalary()
-        {
-            Console.Clear();
-            Console.WriteLine("Please enter min salary");
-            decimal min = Convert.ToDecimal(Console.ReadLine());
-            Console.WriteLine("Please enter max salary");
-            decimal max = Convert.ToDecimal(Console.ReadLine());
-
-            var resultSalary = _dataSlot.Employees.Where(e => e.Salary >= min && e.Salary <= max);
-
-            foreach (Employee employee in resultSalary)
-            {
-                Console.WriteLine("{0}: {1} TL", employee.Name, employee.Salary.ToString());
-            }
-
-            Console.WriteLine(" Do you want to write this data to file? (y/n)");
-            ConsoleKeyInfo cki = Console.ReadKey();
-            if (cki.Key == ConsoleKey.Y)
-            {
-                var employeeContent = "Name;Salary;TrId";
-                var employeePath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "Employees-" + DateTime.Now.ToString("yyyyMMddHHmm") + ".csv");
-
-                foreach (var item in resultSalary)
-                {
-                    employeeContent += Environment.NewLine + string.Join(';', item.Name, item.Salary.ToString(), item.TrId);
-                }
-                await FileHandler.WriteAsync(employeePath, employeeContent);
-            }
-            else if (cki.Key == ConsoleKey.N)
-            {
-                Console.Write("\r\nPress Enter to return to Main Menu");
-                Console.ReadLine();
-            }
-        }
 
         static bool ReadInputFromConsole(string label, Func<string, bool> onValidate, out string value)
         {
@@ -623,6 +500,7 @@ namespace Homework
             bool isValid = false;
             while (!isValid)
             {
+                Console.WriteLine();
                 Console.Write(label + ": ");
                 var input = Console.ReadLine();
                 isValid = onValidate(input);
@@ -697,7 +575,7 @@ namespace Homework
                 Console.ReadKey();
             }
 
-            if ( _dataSlot.Companies.Any() == true)
+            if (_dataSlot.Companies.Any() == true)
             {
                 using (var writer = new StreamWriter(Path.Combine(Directory.GetCurrentDirectory(), "Data", "Companies-" + DateTime.Now.ToString("yyyyMMddHHmm") + ".csv")))
                 using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
@@ -723,7 +601,174 @@ namespace Homework
                 Console.Write("Press any key to continue...");
                 Console.ReadKey();
             }
-            
+        }
+
+        static async Task FilterSalary()
+        {
+            Console.Clear();
+            Console.WriteLine("Please enter min salary");
+            decimal min = Convert.ToDecimal(Console.ReadLine());
+            Console.WriteLine("Please enter max salary");
+            decimal max = Convert.ToDecimal(Console.ReadLine());
+
+            var resultSalary = _dataSlot.Employees.Where(e => e.Salary >= min && e.Salary <= max);
+
+            foreach (Employee employee in resultSalary)
+            {
+                Console.WriteLine("{0}: {1} TL", employee.Name, employee.Salary.ToString());
+            }
+
+            Console.WriteLine(" Do you want to write this data to file? (y/n)");
+            ConsoleKeyInfo cki = Console.ReadKey();
+            if (cki.Key == ConsoleKey.Y)
+            {
+                var employeeContent = "Name;Salary;TrId";
+                var employeePath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "Employees-" + DateTime.Now.ToString("yyyyMMddHHmm") + ".csv");
+
+                foreach (var item in resultSalary)
+                {
+                    employeeContent += Environment.NewLine + string.Join(';', item.Name, item.Salary.ToString(), item.TrId);
+                }
+                await FileHandler.WriteAsync(employeePath, employeeContent);
+            }
+            else if (cki.Key == ConsoleKey.N)
+            {
+                Console.Write("\r\nPress Enter to return to Main Menu");
+                Console.ReadLine();
+            }
+        }
+
+        private static async Task SaveToFile()
+        {
+            var CompanyPath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "Companies-" + DateTime.Now.ToString("yyyyMMddHHmm") + ".csv");
+            var companyContent = "Name;";
+            foreach (var item in _dataSlot.Companies)
+            {
+                companyContent += Environment.NewLine + string.Join(';', item.Name);
+            }
+
+            await FileHandler.WriteAsync(CompanyPath, companyContent);
+
+            var employeePath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "Employees-" + DateTime.Now.ToString("yyyyMMddHHmm") + ".csv");
+            var employeeContent = "Name;BirthDate;CompanyName;Salary;TrId";
+            foreach (var item in _dataSlot.Employees)
+            {
+                employeeContent += Environment.NewLine + string.Join(';', item.Name, item.BirthDate.ToString("dd.MM.yyyy"), item.Company?.Name, item.Salary.ToString(), item.TrId);
+            }
+
+            await FileHandler.WriteAsync(employeePath, employeeContent);
+        }
+
+        private static async Task LoadCompany()
+        {
+            string cmpStr = null;
+            Console.WriteLine(" Do you want to use default file? (y/n)");
+            ConsoleKeyInfo cki = Console.ReadKey();
+            if (cki.Key == ConsoleKey.N)
+            {
+                Console.WriteLine("Please enter valid path");
+                string filePath = Console.ReadLine();
+                if (File.Exists(filePath))
+                {
+                    cmpStr = await FileHandler.ReadAsync(filePath);
+                }
+                else
+                {
+                    Console.WriteLine("The path is invalid");
+                    Console.Write("Press any key to back");
+                    Console.ReadKey();
+                }
+            }
+            else if (cki.Key == ConsoleKey.Y)
+            {
+                cmpStr = await FileHandler.ReadAsync(Path.Combine(Directory.GetCurrentDirectory(), "Data", "Companies-Sample.csv"));
+            }
+
+            var companyLines = cmpStr.Split(Environment.NewLine).ToList().Where(e => !string.IsNullOrWhiteSpace(e)).ToList();
+            if (companyLines.Count > 0)
+                companyLines.RemoveAt(0);
+
+            var nextId = 1;
+            if (_dataSlot.Companies.Count > 0)
+            {
+                nextId = _dataSlot.Companies.Max(e => e.Id);
+            }
+
+            foreach (var line in companyLines)
+            {
+                var fields = line.Split(';');
+                var found = _dataSlot.Companies.Find(e => e.TaxNo == fields[1]);
+                if (found == null)
+                {
+                    _dataSlot.Companies.Add(new Company()
+                    {
+                        Id = nextId++,
+                        Name = fields[0],
+                        TaxNo = fields[1]
+                    });
+                }
+            }
+            CompanyLists();
+        }
+
+        private static void ConfigureSettings()
+        {
+            var builder = new ConfigurationBuilder()
+               .SetBasePath(Directory.GetCurrentDirectory())
+               .AddJsonFile("appsettings.json", optional: false);
+            var config = builder.Build();
+            _appSettings = config.Get<AppSettings>();
+        }
+
+        public static async Task LoadEmployee()
+        {
+            string empStr = null;
+            Console.WriteLine(" Do you want to use default file? (y/n)");
+            ConsoleKeyInfo cki = Console.ReadKey();
+
+            if (cki.Key == ConsoleKey.N)
+            {
+                Console.WriteLine("Please enter valid path");
+                string filePath = Console.ReadLine();
+                if (File.Exists(filePath))
+                {
+                    empStr = await FileHandler.ReadAsync(filePath);
+                }
+                else
+                {
+                    Console.WriteLine("The path is invalid");
+                    Console.Write("Press any key to back");
+                    Console.ReadKey();
+                }
+            }
+            else if (cki.Key == ConsoleKey.Y)
+            {
+                empStr = await FileHandler.ReadAsync(Path.Combine(Directory.GetCurrentDirectory(), "Data", "Employees-Sample.csv"));
+            }
+
+            var employeeLines = empStr.Split(Environment.NewLine).ToList().Where(e => !string.IsNullOrWhiteSpace(e)).ToList();
+            if (employeeLines.Count > 0)
+            {
+                employeeLines.RemoveAt(0);
+            }
+
+            foreach (var line in employeeLines)
+            {
+                var fields = line.Split(';');
+                var found = _dataSlot.Employees.Find(e => e.TrId == fields[4]);
+                if (found == null)
+                {
+                    _dataSlot.Employees.Add(new Employee()
+                    {
+                        Name = fields[0],
+                        BirthDate = DateTime.ParseExact(fields[1], "dd.MM.yyyy", System.Globalization.CultureInfo.InvariantCulture),
+                        Company = _dataSlot.Companies.Where(e => e.Name == fields[2]).FirstOrDefault(),
+                        Salary = decimal.Parse(fields[3]),
+                        TrId = fields[4]
+                    });
+                }
+            }
+            EmployeeLists();
         }
     }
     public class DataSlot
