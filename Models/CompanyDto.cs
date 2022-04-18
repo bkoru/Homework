@@ -1,4 +1,4 @@
-﻿namespace Homework.DemoApi
+﻿namespace Homework.Models
 {
     public class CompanyDto
     {

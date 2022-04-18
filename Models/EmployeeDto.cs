@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Homework.DemoApi
+namespace Homework.Models
 {
     public class EmployeeDto
     {

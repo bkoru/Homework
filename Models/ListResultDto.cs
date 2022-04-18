@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Homework.DemoApi
+namespace Homework.Models
 {
     public class ListResultDto<T>
     {

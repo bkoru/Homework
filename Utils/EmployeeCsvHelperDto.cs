@@ -1,7 +1,7 @@
 ﻿using CsvHelper.Configuration.Attributes;
 using System;
 
-namespace Homework.CsvHelper
+namespace Homework.Utils
 {
     class EmployeeCsvHelperDto
     {
@@ -11,5 +11,6 @@ namespace Homework.CsvHelper
                 "dd/MM/yy", "dd/M/yy", "d/M/yy", "d/MM/yy", "d.MM.yyyy")]
         public DateTime BirthDate { get; set; }
         public decimal Salary { get; set; }
+        public int Id { get; set; }
     }
 }

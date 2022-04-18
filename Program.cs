@@ -1,7 +1,7 @@
 ﻿using CsvHelper;
 using CsvHelper.Configuration;
-using Homework.CsvHelper;
-using Homework.DemoApi;
+using Homework.Utils;
+using Homework.Models;
 using Homework.Entities;
 using Homework.Settings;
 using Microsoft.Extensions.Configuration;
@@ -31,6 +31,7 @@ namespace Homework
 
         private static async Task Menu()
         {
+            ReadCsv();
             ConsoleKeyInfo cki;
             do
             {
@@ -78,29 +79,99 @@ namespace Homework
             while (cki.Key != ConsoleKey.Escape);
         }
 
+        public static void ReadCsv()
+        {
+            string companyPath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "Companies-Sample.csv");
+
+            using (var reader = new StreamReader(companyPath))
+            {
+                var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+                {
+                    Delimiter = ";",
+                };
+
+                    using (var csv = new CsvReader(reader, config))
+                    {
+                        var records = csv.GetRecords<Company>();
+                        csv.Context.RegisterClassMap<CompanyMap>();
+
+                        var nextId = 1;
+                        if (_dataSlot.Companies.Count > 0)
+                        {
+                            nextId = _dataSlot.Companies.Max(c => c.Id);
+                            nextId++;
+                        }
+
+                        foreach (var company in records)
+                        {
+                            var found = _dataSlot.Companies.Find(c => c.TaxNo == company.TaxNo || c.Name == company.Name);
+                            if (found == null)
+                            {
+                                _dataSlot.Companies.Add(new Company()
+                                {
+                                    Id = nextId++,
+                                    Name = company.Name,
+                                    TaxNo = company.TaxNo
+                                });
+                            }
+                        }
+                    }
+            }
+
+            string employeePath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "Employees-Sample.csv");
+
+            using (var reader = new StreamReader(employeePath))
+            {
+                var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+                {
+                    Delimiter = ";",
+                };
+
+                using (var csv = new CsvReader(reader, config))
+                {
+                    var records = csv.GetRecords<Employee>();
+                    csv.Context.RegisterClassMap<EmployeeMap>();
+
+                    foreach (var employee in records)
+                    {
+                        var nextId = 1;
+
+                        if (_dataSlot.Employees.Count > 0)
+                        {
+                            nextId = _dataSlot.Employees.Max(e => e.Id);
+                            nextId++;
+                        }
+
+                        var found = _dataSlot.Employees.Find(e => e.TrId == employee.TrId);
+                        if (found == null)
+                        {
+                            _dataSlot.Employees.Add(new Employee()
+                            {
+                                Name = employee.Name,
+                                BirthDate = employee.BirthDate,
+                                Salary = employee.Salary,
+                                TrId = employee.TrId,
+                                Id = nextId++
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
         public static void LoadCompanyCsvHelper()
         {
             string filePath = null;
             Console.Clear();
-            Console.WriteLine(" Do you want to use default file? (y/n)");
-            ConsoleKeyInfo cki = Console.ReadKey();
+            Console.WriteLine("Please enter valid path");
+            filePath = Console.ReadLine();
 
-            if (cki.Key == ConsoleKey.N)
+            if (!File.Exists(filePath))
             {
-                Console.WriteLine("\nPlease enter valid path");
-                filePath = Console.ReadLine();
-
-                if (!File.Exists(filePath))
-                {
-                    Console.WriteLine("File you entered doesn't exist");
-                    Console.WriteLine("\r\n Press Enter to return to Main Menu");
-                    Console.ReadKey();
-                    return;
-                }
-            }
-            else if (cki.Key == ConsoleKey.Y)
-            {
-                filePath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "Companies-Sample.csv");
+                Console.WriteLine("File you entered doesn't exist");
+                Console.WriteLine("\r\n Press Enter to return to Main Menu");
+                Console.ReadKey();
+                return;
             }
 
             if (filePath != null)
@@ -110,21 +181,20 @@ namespace Homework
                     var config = new CsvConfiguration(CultureInfo.InvariantCulture)
                     {
                         Delimiter = ";",
-                        HeaderValidated = null,
-                        MissingFieldFound = null
                     };
 
                     try
                     {
                         using (var csv = new CsvReader(reader, config))
                         {
-                            var records = csv.GetRecords<CompanyCsvHelperDto>();
+                            var records = csv.GetRecords<Company>();
                             csv.Context.RegisterClassMap<CompanyMap>();
 
                             var nextId = 1;
                             if (_dataSlot.Companies.Count > 0)
                             {
                                 nextId = _dataSlot.Companies.Max(c => c.Id);
+                                nextId++;
                             }
 
                             foreach (var company in records)
@@ -168,27 +238,15 @@ namespace Homework
         {
             string filePath = null;
             Console.Clear();
-            Console.WriteLine("Do you want to use default file? (y/n)");
-            ConsoleKeyInfo cki = Console.ReadKey();
+            Console.WriteLine("Please enter valid path");
+            filePath = Console.ReadLine();
 
-            if (cki.Key == ConsoleKey.N)
+            if (!File.Exists(filePath))
             {
-                Console.WriteLine("\nPlease enter valid path");
-                string directory = Console.ReadLine();
-                if (File.Exists(directory))
-                {
-                    filePath = directory;
-                }
-                else
-                {
-                    Console.WriteLine("The path is invalid");
-                    Console.Write("Press any key to back");
-                    Console.ReadKey();
-                }
-            }
-            else if (cki.Key == ConsoleKey.Y)
-            {
-                filePath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "Employees-Sample.csv");
+                Console.WriteLine("File you entered doesn't exist");
+                Console.WriteLine("\r\n Press Enter to return to Main Menu");
+                Console.ReadKey();
+                return;
             }
 
             if (filePath != null)
@@ -198,8 +256,6 @@ namespace Homework
                     var config = new CsvConfiguration(CultureInfo.InvariantCulture)
                     {
                         Delimiter = ";",
-                        HeaderValidated = null,
-                        MissingFieldFound = null
                     };
 
                     try
@@ -207,7 +263,7 @@ namespace Homework
                         using (var csv = new CsvReader(reader, config))
                         {
                             csv.Context.RegisterClassMap<EmployeeMap>();
-                            var records = csv.GetRecords<EmployeeCsvHelperDto>();
+                            var records = csv.GetRecords<Employee>();
 
                             foreach (var employee in records)
                             {
@@ -216,6 +272,7 @@ namespace Homework
                                 if (_dataSlot.Employees.Count > 0)
                                 {
                                     nextId = _dataSlot.Employees.Max(e => e.Id);
+                                    nextId++;
                                 }
 
                                 var found = _dataSlot.Employees.Find(e => e.TrId == employee.TrId);
@@ -232,7 +289,7 @@ namespace Homework
                                 }
                                 else
                                 {
-                                    Console.WriteLine("Employee could not be added.Because TR Id: " + employee.TrId + " already exists in the system.");
+                                    Console.WriteLine("Employee could not be added. Because TR Id: " + employee.TrId + " already exists in the system.");
                                 }
                             }
                             Console.ReadKey();
@@ -277,7 +334,7 @@ namespace Homework
                 using (var writer = new StreamWriter(Path.Combine(Directory.GetCurrentDirectory(), "Data", "Employees-" + DateTime.Now.ToString("yyyyMMddHHmm") + ".csv")))
                 using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
                 {
-                    csv.Context.RegisterClassMap<FilterMap>();
+                    csv.Context.RegisterClassMap<EmployeeMap>();
                     csv.WriteHeader<Employee>();
                     csv.NextRecord();
 
@@ -307,6 +364,7 @@ namespace Homework
                 if (_dataSlot.Companies.Count > 0)
                 {
                     nextId = _dataSlot.Companies.Max(c => c.Id);
+                    nextId++;
                 }
 
                 var found = _dataSlot.Companies.Find(c => c.TaxNo == company.taxNo || c.Name == company.name);
@@ -321,7 +379,7 @@ namespace Homework
                 }
                 else
                 {
-                    Console.WriteLine("Company named could not be added. Because the tax number " + company.taxNo + " or the company name " + company.name + " already exists in the system.");
+                    Console.WriteLine("Company could not be added. Because the tax number " + company.taxNo + " or the company name " + company.name + " already exists in the system.");
                     Console.Write("Press any key");
                     Console.ReadKey();
                 }
@@ -341,6 +399,7 @@ namespace Homework
                 if (_dataSlot.Employees.Count > 0)
                 {
                     nextId = _dataSlot.Employees.Max(e => e.Id);
+                    nextId++;
                 }
 
                 var found = _dataSlot.Employees.Find(e => e.TrId == employee.tckn);
@@ -369,29 +428,31 @@ namespace Homework
         {
             Console.Clear();
             int companyCount;
-            Console.Write("Eklemek istediğiniz şirket sayısını giriniz: ");
+            Console.Write("Please enter the number of companies you want to add: ");
             while (!int.TryParse(Console.ReadLine(), out companyCount))
             {
-                Console.WriteLine("Lütfen geçerli bir sayı giriniz");
-                Console.Write("Eklemek istediğiniz şirket sayısını giriniz: ");
+                Console.WriteLine("Please enter a valid number");
+                Console.Write("Please enter the number of companies you want to add: ");
             }
 
             Company.CreateCompany(_dataSlot, companyCount);
+            SaveChanges();
         }
 
         private static void CreateRandomEmployee()
         {
             Console.Clear();
             int employeeCount;
-            Console.Write("Eklemek istediğiniz çalışan sayısını giriniz: ");
+            Console.Write("Please enter the number of employees you want to add: ");
 
             while (!int.TryParse(Console.ReadLine(), out employeeCount))
             {
-                Console.WriteLine("Lütfen geçerli bir sayı giriniz");
-                Console.Write("Eklemek istediğiniz çalışan sayısını giriniz: ");
+                Console.WriteLine("Please enter a valid number");
+                Console.Write("Please enter the number of employees you want to add: ");
             }
 
             Employee.CreateEmployee(_dataSlot, employeeCount);
+            SaveChanges();
         }
 
 
@@ -405,6 +466,7 @@ namespace Homework
                 Console.WriteLine("Name:{0} Tax No:{1} Id:{2}", company.Name, company.TaxNo, company.Id);
             }
 
+            SaveChanges();
             Console.Write("Press any key to back");
             Console.ReadKey();
         }
@@ -428,6 +490,7 @@ namespace Homework
                 Console.WriteLine("{0}: {1} TL", employee.Name, employee.Salary);
             }
 
+            SaveChanges();
             Console.Write("Press any key to back");
             Console.ReadKey();
         }
@@ -475,6 +538,7 @@ namespace Homework
             if (_dataSlot.Employees.Count > 0)
             {
                 nextId = _dataSlot.Employees.Max(e => e.Id);
+                nextId++;
             }
             user.Id = nextId++;
 
@@ -490,6 +554,7 @@ namespace Homework
                 Console.WriteLine("The employee named " + user.Name + " could not be added. Because the ID number " + user.TrId + " already exists in the system.");
             }
 
+            SaveChanges();
             Console.Write("Press any key to back");
             Console.ReadKey();
         }
@@ -549,8 +614,14 @@ namespace Homework
         {
             if (_dataSlot.Employees.Any() == true)
             {
-                using (var writer = new StreamWriter(Path.Combine(Directory.GetCurrentDirectory(), "Data", "Employees-" + DateTime.Now.ToString("yyyyMMddHHmm") + ".csv")))
-                using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
+                var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+                {
+                    Delimiter = ";",
+                };
+
+                using (var writer = new StreamWriter(Path.Combine(Directory.GetCurrentDirectory(), "Data", "Employees-Sample.csv")))
+
+                using (var csv = new CsvWriter(writer, config))
                 {
                     csv.Context.RegisterClassMap<EmployeeMap>();
                     csv.WriteHeader<Employee>();
@@ -562,10 +633,6 @@ namespace Homework
                         csv.NextRecord();
                     }
                 }
-                Console.Clear();
-                Console.WriteLine("Employee List saved");
-                Console.Write("Press any key to back");
-                Console.ReadKey();
             }
             else
             {
@@ -577,9 +644,16 @@ namespace Homework
 
             if (_dataSlot.Companies.Any() == true)
             {
-                using (var writer = new StreamWriter(Path.Combine(Directory.GetCurrentDirectory(), "Data", "Companies-" + DateTime.Now.ToString("yyyyMMddHHmm") + ".csv")))
-                using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
+                var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+                    {
+                        Delimiter = ";",
+                    };
+
+                using (var writer = new StreamWriter(Path.Combine(Directory.GetCurrentDirectory(), "Data", "Companies-Sample.csv")))
+
+                using (var csv = new CsvWriter(writer, config))
                 {
+                    csv.Context.RegisterClassMap<CompanyMap>();
                     csv.WriteHeader<Company>();
                     csv.NextRecord();
 
@@ -589,10 +663,6 @@ namespace Homework
                         csv.NextRecord();
                     }
                 }
-                Console.Clear();
-                Console.WriteLine("Company List saved");
-                Console.Write("Press any key to back");
-                Console.ReadKey();
             }
             else
             {

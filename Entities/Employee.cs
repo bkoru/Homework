@@ -11,7 +11,8 @@ namespace Homework.Entities
     {
         public int Id { get; set; }
         public string Name { get; set; }
-        [Format("dd-MM-yyyy")]
+        [Format("dd/MM/yyyy", "dd/M/yyyy", "d/M/yyyy", "d/MM/yyyy",
+                "dd/MM/yy", "dd/M/yy", "d/M/yy", "d/MM/yy", "d.MM.yyyy")]
         public DateTime BirthDate { get; set; }
         public Company Company { get; set; }
         public decimal Salary { get; set; }
@@ -80,6 +81,7 @@ namespace Homework.Entities
             if (dataSlot.Employees.Count > 0)
             {
                 nextId = dataSlot.Employees.Max(e => e.Id);
+                nextId++;
             }
 
             for (int i = 0; i < total; i++)
@@ -92,7 +94,7 @@ namespace Homework.Entities
                 }
 
                 var randomDate = RandomDate(startDate, endDate);
-                var employee = new Employee(nextId++, "Emp-" + nextId, randomDate, rnd.Next(4200,10000),trId);
+                var employee = new Employee(nextId++, "Emp" + (nextId-1), randomDate, rnd.Next(4200,10000),trId);
                 dataSlot.Employees.Add(employee);
             }
         }
