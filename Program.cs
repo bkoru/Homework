@@ -47,7 +47,7 @@ namespace Homework
                 Console.WriteLine("[8] Employees salary filter");
                 Console.WriteLine("[9] Load Company from Web API");
                 Console.WriteLine("[0] Load Employee from Web API");
-                Console.WriteLine("[A] Save Changes");
+                Console.WriteLine("[C] Clear All Data");
                 Console.WriteLine("[ESC] Exit");
                 cki = Console.ReadKey();
 
@@ -73,12 +73,12 @@ namespace Homework
                     await LoadCompanyFromApi();
                 else if (cki.Key == ConsoleKey.D0 || cki.Key == ConsoleKey.NumPad0)
                     await LoadEmployeeFromApi();
-                else if (cki.Key == ConsoleKey.A)
-                    SaveChanges();
+                else if (cki.Key == ConsoleKey.C)
+                    ClearData();
             }
             while (cki.Key != ConsoleKey.Escape);
         }
-
+        
         public static void ReadCsv()
         {
             string companyPath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "Companies-Sample.csv");
@@ -612,8 +612,6 @@ namespace Homework
 
         public static void SaveChanges()
         {
-            if (_dataSlot.Employees.Any() == true)
-            {
                 var config = new CsvConfiguration(CultureInfo.InvariantCulture)
                 {
                     Delimiter = ";",
@@ -633,21 +631,6 @@ namespace Homework
                         csv.NextRecord();
                     }
                 }
-            }
-            else
-            {
-                Console.Clear();
-                Console.WriteLine("Failed to save Employee List. Because the list is empty.");
-                Console.Write("Press any key to continue...");
-                Console.ReadKey();
-            }
-
-            if (_dataSlot.Companies.Any() == true)
-            {
-                var config = new CsvConfiguration(CultureInfo.InvariantCulture)
-                    {
-                        Delimiter = ";",
-                    };
 
                 using (var writer = new StreamWriter(Path.Combine(Directory.GetCurrentDirectory(), "Data", "Companies-Sample.csv")))
 
@@ -663,15 +646,31 @@ namespace Homework
                         csv.NextRecord();
                     }
                 }
+        }
+
+        public static void ClearData()
+        {
+            Console.Clear();
+            Console.WriteLine("Are you sure you want to CLEAR all data? (y/n)");
+            ConsoleKeyInfo cki = Console.ReadKey();
+            if (cki.Key == ConsoleKey.Y)
+            {
+                _dataSlot.Employees.Clear();
+                _dataSlot.Companies.Clear();
+                SaveChanges();
+                Console.Clear();
+                Console.Write("All data cleared. Press any key to back");
+                Console.ReadKey();
             }
-            else
+
+            else if (cki.Key == ConsoleKey.N)
             {
                 Console.Clear();
-                Console.WriteLine("Failed to save Company List. Because the list is empty.");
-                Console.Write("Press any key to continue...");
+                Console.Write("Press any key to back");
                 Console.ReadKey();
             }
         }
+
 
         static async Task FilterSalary()
         {

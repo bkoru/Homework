@@ -17,7 +17,6 @@ namespace Homework.Entities
         public Company Company { get; set; }
         public decimal Salary { get; set; }
         public string TrId { get; set; }
-
         public int Age
         {
             get
@@ -48,8 +47,10 @@ namespace Homework.Entities
             return age;
         }
 
-        public static DateTime RandomDate(DateTime startDate, DateTime endDate)
+        public static DateTime RandomDate()
         {
+            var startDate = new DateTime(1950, 01, 01);
+            var endDate = new DateTime(2004, 01, 01);
             int range = (endDate - startDate).Days;
             int randomDays = rnd.Next(range);
             return startDate.AddDays(randomDays);
@@ -75,8 +76,6 @@ namespace Homework.Entities
         public static void CreateEmployee(DataSlot dataSlot, int total)
         {
             int companiesCount = dataSlot.Companies.Count;
-            var startDate = new DateTime(1950, 01, 01);
-            var endDate = new DateTime(2004, 01, 01);
             var nextId = 1;
             if (dataSlot.Employees.Count > 0)
             {
@@ -93,8 +92,7 @@ namespace Homework.Entities
                     trId = RandomTrId();
                 }
 
-                var randomDate = RandomDate(startDate, endDate);
-                var employee = new Employee(nextId++, "Emp" + (nextId-1), randomDate, rnd.Next(4200,10000),trId);
+                var employee = new Employee(nextId++, "Emp" + (nextId-1), RandomDate(), rnd.Next(4200,10000),trId);
                 dataSlot.Employees.Add(employee);
             }
         }
